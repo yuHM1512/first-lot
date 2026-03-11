@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Email List - 1st Lot Management</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6",
+                        "accent": "#0ea5e9",
+                        "surface": "#ffffff",
+                        "background": "#f8fafc",
+                    },
+                    fontFamily: {
+                        "sans": ["Inter", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style type="text/tailwindcss">
+        .custom-scrollbar::-webkit-scrollbar { height: 10px; width: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20; }
+        
+        #sidebar { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        #sidebar.collapsed { width: 80px; }
+        #sidebar.collapsed .sidebar-text { display: none; }
+        #sidebar.collapsed .sidebar-header-text { display: none; }
+        #sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+        #sidebar.collapsed .section-label { display: none; }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-row overflow-hidden font-sans bg-background text-slate-900">
+    <!-- Left Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex shrink-0 z-20">
+        <div class="p-6 flex items-center gap-3">
+            <div
+                class="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white shadow-lg shadow-accent/20 shrink-0">
+                <span class="material-symbols-outlined !text-2xl">app_registration</span>
+            </div>
+            <div class="sidebar-header-text">
+                <h1 class="text-sm font-bold tracking-tight text-slate-800">1st Lot Tracker</h1>
+                <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">M29 Digital Team</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/">
+                <span class="material-symbols-outlined">home</span>
+                <span class="sidebar-text">Trang chủ</span>
+            </a>
+            <div class="h-px bg-slate-100 mx-4 my-2"></div>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/first-lot/">
+                <span class="material-symbols-outlined">inventory_2</span>
+                <span class="sidebar-text">Thông tin vải</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/history/">
+                <span class="material-symbols-outlined">history</span>
+                <span class="sidebar-text">1st Lot History</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 bg-accent text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-accent/10"
+                href="/emails/">
+                <span class="material-symbols-outlined">mail</span>
+                <span class="sidebar-text">Email List</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="#">
+                <span class="material-symbols-outlined">analytics</span>
+                <span class="sidebar-text">Báo cáo</span>
+            </a>
+            <div class="pt-4 pb-2 px-4 section-label">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quản trị</p>
+            </div>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="sidebar-text">Cài đặt</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-100 italic text-[10px] text-slate-400 text-center sidebar-text">
+            &copy; 2024 SwiftOrder Pro v2.0
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-50/50 h-screen overflow-hidden">
+        <!-- Header -->
+        <header class="bg-surface border-b border-slate-200 px-8 py-4 flex items-center justify-between gap-4 shrink-0">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()"
+                    class="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <h2 class="text-lg font-bold text-slate-800">Danh sách Email NCU</h2>
+                <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
+                <div class="text-sm text-slate-500 font-medium hidden sm:block">{{ total }} nhà cung cấp</div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-7xl mx-auto space-y-6">
+
+                <!-- Header + Add Button -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-2xl font-extrabold text-slate-800">Quản lý Email Nhà cung cấp</h3>
+                        <p class="text-sm text-slate-400 font-medium mt-1">Danh sách email liên hệ để gửi thông báo tự
+                            động</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="syncBtn" onclick="syncFromSheet()"
+                            class="flex items-center gap-2 px-5 py-3 bg-emerald-500 text-white rounded-2xl text-sm font-bold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95">
+                            <span class="material-symbols-outlined text-lg" id="syncIcon">sync</span>
+                            <span id="syncText">Đồng bộ Sheet</span>
+                        </button>
+                        <button onclick="openAddModal()"
+                            class="flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-2xl text-sm font-bold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20 hover:scale-105 active:scale-95">
+                            <span class="material-symbols-outlined text-lg">person_add</span>
+                            Thêm mới
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm theo tên, CPT supplier hoặc email..."
+                        class="w-full bg-white border border-slate-200 rounded-2xl pl-14 pr-5 py-4 text-sm focus:ring-4 focus:ring-accent/10 focus:border-accent outline-none transition-all font-semibold shadow-sm placeholder:text-slate-400 placeholder:font-normal" />
+                </div>
+
+                <!-- Data Table -->
+                <section
+                    class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                    <div class="px-8 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+                            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Danh sách
+                                Supplier</span>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-400">{{ total }} bản ghi</span>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar flex-1 relative">
+                        <table class="w-full text-left border-separate border-spacing-0">
+                            <thead class="bg-slate-50 sticky top-0 z-20">
+                                <tr class="text-slate-800 text-[11px] font-bold uppercase tracking-wider">
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-50 sticky top-0 w-12 text-center">
+                                        #</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-50 sticky top-0 min-w-[160px]">
+                                        Tên Supplier</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-50 sticky top-0 min-w-[300px]">
+                                        CPT Supplier</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-50 sticky top-0 min-w-[350px]">
+                                        Email NCU</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-50 sticky top-0 w-24 text-center">
+                                        Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                {% for s in suppliers %}
+                                <tr class="hover:bg-slate-50/80 transition-colors group" id="row-{{ s.id }}">
+                                    <td class="px-6 py-5 text-xs text-slate-400 font-bold text-center">{{ loop.index }}
+                                    </td>
+                                    <td class="px-6 py-5 text-sm font-bold text-slate-700">{{ s.supplier_name or '---'
+                                        }}</td>
+                                    <td class="px-6 py-5 text-xs text-slate-600 font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span>
+                                            <span class="truncate" title="{{ s.cpt_supplier }}">{{ s.cpt_supplier
+                                                }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-5 text-xs text-slate-500">
+                                        <div class="flex flex-wrap gap-1">
+                                            {% for email in s.email.split(',') %}
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-1 bg-accent/5 text-accent rounded-lg text-[10px] font-bold border border-accent/10">
+                                                {{ email.strip() }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-5 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button
+                                                class="edit-btn w-9 h-9 flex items-center justify-center bg-white border border-slate-200 text-accent rounded-xl hover:bg-accent hover:text-white hover:scale-110 active:scale-95 transition-all shadow-sm"
+                                                data-id="{{ s.id }}" data-name="{{ s.supplier_name }}"
+                                                data-cpt="{{ s.cpt_supplier }}" data-email="{{ s.email }}"
+                                                title="Chỉnh sửa">
+                                                <span class="material-symbols-outlined text-lg">edit</span>
+                                            </button>
+                                            <button
+                                                class="del-btn w-9 h-9 flex items-center justify-center bg-white border border-slate-200 text-red-500 rounded-xl hover:bg-red-500 hover:text-white hover:scale-110 active:scale-95 transition-all shadow-sm"
+                                                data-id="{{ s.id }}" data-name="{{ s.supplier_name }}" title="Xóa">
+                                                <span class="material-symbols-outlined text-lg">delete</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit / Add Modal -->
+    <div id="supplierModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-xl overflow-hidden shadow-2xl flex flex-col scale-95 transition-all duration-300 transform"
+            id="modalContent">
+            <div class="px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center text-accent">
+                        <span class="material-symbols-outlined text-2xl" id="modalIcon">edit</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-extrabold text-slate-800" id="modalTitle">Chỉnh sửa Supplier</h3>
+                        <p class="text-[11px] text-slate-500 font-bold uppercase tracking-widest" id="modalSubtitle">Cập
+                            nhật thông tin</p>
+                    </div>
+                </div>
+                <button onclick="closeModal()"
+                    class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white rounded-xl transition-all shadow-sm">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="supplierForm" class="p-10 space-y-6">
+                <input type="hidden" id="formId" value="">
+
+                <div class="space-y-2.5">
+                    <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Tên
+                        Supplier</label>
+                    <div class="relative group">
+                        <span
+                            class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-accent transition-colors">business</span>
+                        <input type="text" id="formSupplierName" name="supplier_name" required
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-5 py-4 text-sm focus:ring-4 focus:ring-accent/5 focus:border-accent outline-none transition-all font-bold text-slate-700"
+                            placeholder="VD: DALUEN, TRAN HIEP THANH...">
+                    </div>
+                </div>
+
+                <div class="space-y-2.5">
+                    <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">CPT
+                        Supplier</label>
+                    <div class="relative group">
+                        <span
+                            class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-accent transition-colors">factory</span>
+                        <input type="text" id="formCptSupplier" name="cpt_supplier" required
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-5 py-4 text-sm focus:ring-4 focus:ring-accent/5 focus:border-accent outline-none transition-all font-bold text-slate-700"
+                            placeholder="VD: DP Viet Nam (Ho Chi Minh) -DA LUEN">
+                    </div>
+                </div>
+
+                <div class="space-y-2.5">
+                    <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Email NCU
+                        <span class="normal-case text-slate-300 font-medium">(phân cách bằng dấu phẩy)</span>
+                    </label>
+                    <div class="relative group">
+                        <span
+                            class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400 group-focus-within:text-accent transition-colors">mail</span>
+                        <textarea id="formEmail" name="email" required rows="3"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-5 py-4 text-sm focus:ring-4 focus:ring-accent/5 focus:border-accent outline-none transition-all font-bold text-slate-700 resize-none"
+                            placeholder="email1@example.com, email2@example.com"></textarea>
+                    </div>
+                </div>
+            </form>
+
+            <div class="px-10 py-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
+                <button type="button" onclick="closeModal()"
+                    class="px-6 py-3 text-sm font-bold text-slate-600 hover:text-slate-800 transition-colors">Hủy</button>
+                <button type="button" onclick="saveSupplier()"
+                    class="px-8 py-3 bg-accent text-white rounded-2xl text-sm font-bold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20">
+                    Lưu thay đổi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+
+        // Modal
+        function openEditModal(id, name, cpt, email) {
+            document.getElementById('formId').value = id;
+            document.getElementById('formSupplierName').value = name;
+            document.getElementById('formCptSupplier').value = cpt;
+            document.getElementById('formEmail').value = email;
+            document.getElementById('modalTitle').textContent = 'Chỉnh sửa Supplier';
+            document.getElementById('modalSubtitle').textContent = 'Cập nhật thông tin';
+            document.getElementById('modalIcon').textContent = 'edit';
+            showModal();
+        }
+
+        function openAddModal() {
+            document.getElementById('formId').value = '';
+            document.getElementById('formSupplierName').value = '';
+            document.getElementById('formCptSupplier').value = '';
+            document.getElementById('formEmail').value = '';
+            document.getElementById('modalTitle').textContent = 'Thêm Supplier mới';
+            document.getElementById('modalSubtitle').textContent = 'Nhập thông tin mới';
+            document.getElementById('modalIcon').textContent = 'person_add';
+            showModal();
+        }
+
+        function showModal() {
+            const modal = document.getElementById('supplierModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('supplierModal');
+            const content = document.getElementById('modalContent');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        async function saveSupplier() {
+            const id = document.getElementById('formId').value;
+            const data = {
+                supplier_name: document.getElementById('formSupplierName').value.trim(),
+                cpt_supplier: document.getElementById('formCptSupplier').value.trim(),
+                email: document.getElementById('formEmail').value.trim()
+            };
+
+            if (!data.supplier_name || !data.cpt_supplier || !data.email) {
+                alert('Vui lòng điền đầy đủ thông tin.');
+                return;
+            }
+
+            try {
+                let res;
+                if (id) {
+                    res = await fetch(`/api/supplier-email/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    res = await fetch('/api/supplier-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (res.ok) {
+                    closeModal();
+                    location.reload();
+                } else {
+                    const err = await res.json();
+                    alert('Lỗi: ' + (err.detail || 'Không thể lưu'));
+                }
+            } catch (e) {
+                alert('Lỗi kết nối: ' + e.message);
+            }
+        }
+
+        async function deleteSupplier(id, name) {
+            if (!confirm(`Bạn có chắc muốn xóa supplier "${name}"?`)) return;
+            try {
+                const res = await fetch(`/api/supplier-email/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    alert('Lỗi khi xóa supplier');
+                }
+            } catch (e) {
+                alert('Lỗi kết nối: ' + e.message);
+            }
+        }
+
+        // Event delegation for edit and delete buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    openEditModal(btn.dataset.id, btn.dataset.name, btn.dataset.cpt, btn.dataset.email);
+                });
+            });
+            document.querySelectorAll('.del-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    deleteSupplier(btn.dataset.id, btn.dataset.name);
+                });
+            });
+        });
+
+        // Live search filter
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                const q = searchInput.value.toLowerCase().trim();
+                document.querySelectorAll('tbody tr').forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(q) ? '' : 'none';
+                });
+            });
+        }
+    </script>
+
+    <script>
+        async function syncFromSheet() {
+            const btn = document.getElementById('syncBtn');
+            const icon = document.getElementById('syncIcon');
+            const text = document.getElementById('syncText');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-wait');
+            icon.classList.add('animate-spin');
+            text.textContent = 'Đang đồng bộ...';
+
+            try {
+                const res = await fetch('/api/supplier-email/sync', { method: 'POST' });
+                const data = await res.json();
+
+                if (res.ok) {
+                    text.textContent = `✓ Đồng bộ ${data.count} bản ghi`;
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    alert('Lỗi đồng bộ: ' + (data.detail || 'Không rõ'));
+                    text.textContent = 'Đồng bộ Sheet';
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-70', 'cursor-wait');
+                    icon.classList.remove('animate-spin');
+                }
+            } catch (e) {
+                alert('Lỗi kết nối: ' + e.message);
+                text.textContent = 'Đồng bộ Sheet';
+                btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-wait');
+                icon.classList.remove('animate-spin');
+            }
+        }
+    </script>
+</body>
+
+</html>

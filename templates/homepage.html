@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>M29 Digital Hub - Centralized Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f0f4f8;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            color: #1e293b;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        .hero-gradient {
+            background: radial-gradient(circle at top right, #e0f2fe 0%, #f0f4f8 100%);
+        }
+
+        .card-hover {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-12px) scale(1.02);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+
+        .brand-text-gradient {
+            background: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .bg-blob {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.5;
+            z-index: -1;
+        }
+
+        .float-animation {
+            animation: floating 8s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+
+            0%,
+            100% {
+                transform: translate(0, 0px);
+            }
+
+            50% {
+                transform: translate(15px, 25px);
+            }
+        }
+
+        .nav-blur {
+            background: rgba(248, 250, 252, 0.8);
+            backdrop-filter: saturate(180%) blur(10px);
+        }
+
+        .section-header::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background: #2563eb;
+            border-radius: 2px;
+            margin-top: 8px;
+        }
+
+        .enterprise-badge {
+            background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+        }
+    </style>
+</head>
+
+<body class="hero-gradient min-h-screen relative">
+    <!-- Abstract Tech Background -->
+    <div class="bg-blob bg-blue-100 top-[-200px] right-[-200px] float-animation"></div>
+    <div class="bg-blob bg-indigo-100 bottom-[-300px] left-[-200px] float-animation" style="animation-delay: -3s"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="sticky top-0 z-50 nav-blur border-b border-slate-200/60 px-8 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <span class="material-symbols-outlined font-bold">hub</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black text-slate-800 tracking-tight">M29 <span
+                            class="text-blue-600">HUB</span></h1>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.3em]">Digital Transformation</p>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+                <a href="#" class="hover:text-blue-600 transition-colors">Tổng quan</a>
+                <a href="#" class="hover:text-blue-600 transition-colors">Hướng dẫn</a>
+                <a href="#" class="hover:text-blue-600 transition-colors">Hỗ trợ</a>
+                <button
+                    class="bg-slate-800 text-white px-6 py-2 rounded-xl hover:bg-slate-700 transition-all shadow-md active:scale-95">
+                    Hệ thống
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-8 py-16 space-y-24">
+        <!-- Hero Section -->
+        <header class="text-center space-y-6 max-w-4xl mx-auto">
+            <div
+                class="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-black uppercase tracking-widest border border-blue-100 shadow-sm mb-4">
+                <span class="relative flex h-2 w-2">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                M29 Digital Tools Ecosystem
+            </div>
+            <h2 class="text-6xl font-[900] text-slate-800 leading-[1.1] tracking-tight">
+                Cổng Quản Trị <br />
+                <span class="brand-text-gradient">Hệ Sinh Thái Số M29</span>
+            </h2>
+            <p class="text-slate-500 text-xl font-medium leading-relaxed">
+                Tập trung hóa các công cụ số hóa phục vụ khối nghiệp vụ và sản xuất.
+                Nâng cao hiệu quả phối hợp và minh bạch dữ liệu toàn diện.
+            </p>
+        </header>
+
+        <!-- Block 1: Phòng Ban Nghiệp Vụ -->
+        <section class="space-y-10">
+            <div class="flex items-end justify-between border-b border-slate-200 pb-6">
+                <div class="space-y-1">
+                    <h3 class="text-3xl font-black text-slate-800 tracking-tight">Phòng Ban Nghiệp Vụ</h3>
+                    <p class="text-slate-500 font-medium">Khối vận hành, kinh doanh và quy trình công nghệ</p>
+                </div>
+                <div class="text-blue-600 font-bold flex items-center gap-2 text-sm cursor-pointer hover:underline">
+                    Xem toàn bộ sơ đồ <span class="material-symbols-outlined">arrow_right_alt</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Phòng KDXNK -->
+                <div class="glass-panel p-8 rounded-[2.5rem] card-hover cursor-pointer group">
+                    <div
+                        class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-inner transition-colors group-hover:bg-blue-600 group-hover:text-white">
+                        <span class="material-symbols-outlined !text-3xl">language</span>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-800 mb-3">Phòng KDXNK</h4>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Quản lý xuất nhập khẩu, theo dõi đơn hàng và
+                        chuỗi cung ứng quốc tế.</p>
+                    <div class="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-blue-600">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span> 12 Active Tools
+                    </div>
+                </div>
+
+                <!-- Phòng QLCL -->
+                <div class="glass-panel p-8 rounded-[2.5rem] card-hover cursor-pointer group">
+                    <div
+                        class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-inner transition-colors group-hover:bg-emerald-600 group-hover:text-white">
+                        <span class="material-symbols-outlined !text-3xl">verified</span>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-800 mb-3">Phòng QLCL</h4>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Kiểm soát chất lượng, tiêu chuẩn AQL và báo
+                        cáo lỗi phát sinh.</p>
+                    <div
+                        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-emerald-600">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> 08 Active Tools
+                    </div>
+                </div>
+
+                <!-- Phòng KTCN -->
+                <div class="glass-panel p-8 rounded-[2.5rem] card-hover cursor-pointer group">
+                    <div
+                        class="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6 shadow-inner transition-colors group-hover:bg-amber-600 group-hover:text-white">
+                        <span class="material-symbols-outlined !text-3xl">precision_manufacturing</span>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-800 mb-3">Phòng KTCN</h4>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Xây dựng quy trình kỹ thuật, định mức và tối
+                        ưu hóa dây chuyền.</p>
+                    <div class="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-amber-600">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span> 15 Active Tools
+                    </div>
+                </div>
+
+                <!-- Phòng KTCĐ -->
+                <div class="glass-panel p-8 rounded-[2.5rem] card-hover cursor-pointer group">
+                    <div
+                        class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-inner transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                        <span class="material-symbols-outlined !text-3xl">construction</span>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-800 mb-3">Phòng KTCĐ</h4>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Bảo trì trang thiết bị, cơ điện và hạ tầng kỹ
+                        thuật sản xuất.</p>
+                    <div
+                        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-indigo-600">
+                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-600"></span> 05 Active Tools
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Block 2: Xí Nghiệp Sản Xuất -->
+        <section class="space-y-10">
+            <div class="flex items-end justify-between border-b border-slate-200 pb-6">
+                <div class="space-y-1">
+                    <h3 class="text-3xl font-black text-slate-800 tracking-tight">Xí Nghiệp Sản Xuất</h3>
+                    <p class="text-slate-500 font-medium">Khối hiện trường sản xuất và quản lý phân xưởng</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                <!-- XN1-V1 -->
+                <div class="glass-panel p-8 rounded-[2rem] card-hover text-center cursor-pointer group">
+                    <div class="mb-4 group-hover:text-blue-600 transition-colors">
+                        <span
+                            class="material-symbols-outlined !text-5xl opacity-20 group-hover:opacity-100">factory</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-800 mb-2">XN1-V1</h4>
+                    <div class="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-4">
+                        <div class="h-full bg-blue-600 w-3/4"></div>
+                    </div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Operational</p>
+                </div>
+
+                <!-- XN2 -->
+                <div class="glass-panel p-8 rounded-[2rem] card-hover text-center cursor-pointer group">
+                    <div class="mb-4 group-hover:text-blue-600 transition-colors">
+                        <span
+                            class="material-symbols-outlined !text-5xl opacity-20 group-hover:opacity-100">precision_manufacturing</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-800 mb-2">XN2</h4>
+                    <div class="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-4">
+                        <div class="h-full bg-blue-600 w-1/2"></div>
+                    </div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Operational</p>
+                </div>
+
+                <!-- XN3 -->
+                <div class="glass-panel p-8 rounded-[2rem] card-hover text-center cursor-pointer group">
+                    <div class="mb-4 group-hover:text-blue-600 transition-colors">
+                        <span
+                            class="material-symbols-outlined !text-5xl opacity-20 group-hover:opacity-100">apparel</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-800 mb-2">XN3</h4>
+                    <div class="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-4">
+                        <div class="h-full bg-blue-600 w-2/3"></div>
+                    </div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Operational</p>
+                </div>
+
+                <!-- XNV2 -->
+                <div class="glass-panel p-8 rounded-[2rem] card-hover text-center cursor-pointer group">
+                    <div class="mb-4 group-hover:text-blue-600 transition-colors">
+                        <span
+                            class="material-symbols-outlined !text-5xl opacity-20 group-hover:opacity-100">checkroom</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-800 mb-2">XNV2</h4>
+                    <div class="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-4">
+                        <div class="h-full bg-blue-600 w-full"></div>
+                    </div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Operational</p>
+                </div>
+
+                <!-- XNDT -->
+                <div class="glass-panel p-8 rounded-[2rem] card-hover text-center cursor-pointer group">
+                    <div class="mb-4 group-hover:text-blue-600 transition-colors">
+                        <span
+                            class="material-symbols-outlined !text-5xl opacity-20 group-hover:opacity-100">styler</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-800 mb-2">XNDT</h4>
+                    <div class="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-4">
+                        <div class="h-full bg-blue-600 w-1/4"></div>
+                    </div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Operational</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Statistics Footer Section -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-8 pb-10">
+            <div class="glass-panel p-10 rounded-[2.5rem] flex items-center gap-6">
+                <div class="w-16 h-16 bg-blue-600/10 text-blue-600 rounded-2xl flex items-center justify-center">
+                    <span class="material-symbols-outlined !text-4xl">speed</span>
+                </div>
+                <div>
+                    <div class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Efficiency</div>
+                    <div class="text-3xl font-black text-slate-800">92.4%</div>
+                </div>
+            </div>
+            <div class="glass-panel p-10 rounded-[2.5rem] flex items-center gap-6">
+                <div class="w-16 h-16 bg-emerald-600/10 text-emerald-600 rounded-2xl flex items-center justify-center">
+                    <span class="material-symbols-outlined !text-4xl">cloud_done</span>
+                </div>
+                <div>
+                    <div class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Digitized</div>
+                    <div class="text-3xl font-black text-slate-800">1.2K+ Items</div>
+                </div>
+            </div>
+            <div
+                class="enterprise-badge p-10 rounded-[2.5rem] flex items-center gap-6 text-white shadow-xl shadow-slate-900/10">
+                <div class="w-16 h-16 bg-white/10 text-white rounded-2xl flex items-center justify-center">
+                    <span class="material-symbols-outlined !text-4xl">security</span>
+                </div>
+                <div>
+                    <div class="text-xs font-black text-slate-300 uppercase tracking-widest mb-1">Security Status</div>
+                    <div class="text-xl font-bold">Standardized</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center py-12 border-t border-slate-200/60 bg-white/30">
+        <div class="flex items-center justify-center gap-3 mb-4">
+            <div
+                class="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-white text-[10px] font-black">
+                M29</div>
+            <span class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">M29 Digital Hub &copy;
+                2026</span>
+        </div>
+        <p class="text-slate-400 text-[10px] font-medium uppercase tracking-[0.4em]">Integrated Digital Ecosystem for
+            Advanced Manufacturing</p>
+    </footer>
+
+</body>
+
+</html>

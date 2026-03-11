@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body style="margin: 0; padding: 0; background-color: #f4f4f4;">
+    <div
+        style="font-family: 'Times New Roman', serif; font-size: 14px; color: black; max-width: 960px; margin: 0 auto; background: white; padding: 30px;">
+
+        <strong>Dear {{ supplier_name }},</strong><br><br>
+
+        Here is the list of sample orders we have requested on the ES. Please feedback ETD asap! <br><br>
+
+        <!-- Summary Table -->
+        <h4 style="margin-top: 10px; margin-bottom: 6px;">Requested sample orders summary:</h4>
+        <table border="1" cellpadding="6" cellspacing="0"
+            style="border-collapse: collapse; width: 50%; font-size: 13px;">
+            <tr style="background-color: #f2f2f2; font-weight: bold; text-align: center;">
+                <th style="padding: 8px;">FG CC Code</th>
+                <th style="padding: 8px;">Season</th>
+            </tr>
+            {% for item in summary_items %}
+            <tr>
+                <td style="text-align: center; padding: 6px;">{{ item.fg_cc_code }}</td>
+                <td style="text-align: center; padding: 6px;">{{ item.season }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <br>
+
+        <b>Note:</b> Attach Standard fabric card (1st lot) + Test color report + MTSR as requested by Decathlon.<br><br>
+
+        <!-- Detail Table -->
+        <table border="1" cellpadding="5" cellspacing="0"
+            style="border-collapse: collapse; width: 100%; font-size: 11px;">
+            <tr style="background-color: #002060; color: white; font-weight: bold; text-align: center;">
+                <th style="padding: 8px;">SER No.</th>
+                <th style="padding: 8px;">Item</th>
+                <th style="padding: 8px;">Item Description</th>
+                <th style="padding: 8px;">Model No.</th>
+                <th style="padding: 8px;">Model Description</th>
+                <th style="padding: 8px;">FG CC Code</th>
+                <th style="padding: 8px;">Season</th>
+                <th style="padding: 8px;">Passion Brand</th>
+                <th style="padding: 8px;">FG Sample Pieces</th>
+                <th style="padding: 8px;">CPT Supplier</th>
+                <th style="padding: 8px;">Remark</th>
+                <th style="padding: 8px;">Sample Type</th>
+                <th style="padding: 8px;">KT</th>
+            </tr>
+            {% for row in detail_rows %}
+            <tr style="text-align: center;">
+                <td style="padding: 5px;">{{ row.ser_no or '' }}</td>
+                <td style="padding: 5px;">{{ row.item or '' }}</td>
+                <td style="padding: 5px; text-align: left; font-size: 10px;">{{ row.item_description or '' }}</td>
+                <td style="padding: 5px;">{{ row.model_no or '' }}</td>
+                <td style="padding: 5px; text-align: left; font-size: 10px;">{{ row.model_description or '' }}</td>
+                <td style="padding: 5px;">{{ row.fg_cc_code or '' }}</td>
+                <td style="padding: 5px;">{{ row.season or '' }}</td>
+                <td style="padding: 5px;">{{ row.passion_brand or '' }}</td>
+                <td style="padding: 5px;">{{ row.fg_sample_pieces or '' }}</td>
+                <td style="padding: 5px; font-size: 10px;">{{ row.cpt_supplier or '' }}</td>
+                <td style="padding: 5px; font-size: 10px; text-align: left;">{{ row.remark or '' }}</td>
+                <td style="padding: 5px; font-size: 10px;">{{ row.sample_type or '' }}</td>
+                <td style="padding: 5px;">{{ row.kt or '' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <br>
+        <em>This email is sent automatically from the system. Please do not reply directly to this email. If you have
+            any questions or require further assistance, kindly contact <strong>{{ md_name }}</strong> at <strong>{{
+                md_email }}</strong> for support.</em><br><br>
+
+        <strong>Thank you!</strong><br><br>
+
+        <!-- Company Footer -->
+        <div style="font-size: 12px; color: #000ba4; margin-top: 10px; font-family: 'Times New Roman', serif;">
+            <p>
+                <strong>MARCH 29 TEXTILE - GARMENT JOINT STOCK COMPANY</strong><br>
+                <strong>Email:</strong> hachiba@hachibavn.com<br>
+                <strong>Phone:</strong> 0236 3756 999<br>
+                <strong>Website:</strong> <a href="http://hachiba.com.vn" target="_blank"
+                    style="color: #007BFF; text-decoration: none;">hachiba.com.vn</a><br>
+                <strong>Address:</strong> 60 Me Nhu, Da Nang
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

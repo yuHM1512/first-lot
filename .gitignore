@@ -1,0 +1,26 @@
+# Keep environment variables secret
+.env
+
+# Keep Google API credentials secret
+credentials_*.json
+
+# Database files
+*.db
+*.sqlite3
+
+# Python build and cache
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Excel files (data)
+*.xlsx
+*.xls
+*.csv
+
+# OS generated files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+python-dotenv
+python-multipart
+pydantic-settings
+jinja2
+python-dateutil
+pandas
+openpyxl
+gspread
+google-auth
+google-auth-oauthlib
+google-auth-httplib2

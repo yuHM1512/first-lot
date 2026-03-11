@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>1st Lot Management System</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6",
+                        "accent": "#0ea5e9",
+                        "surface": "#ffffff",
+                        "background": "#f8fafc",
+                    },
+                    fontFamily: {
+                        "sans": ["Inter", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style type="text/tailwindcss">
+        .custom-scrollbar::-webkit-scrollbar { height: 10px; width: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20; }
+        
+        /* Sidebar transition */
+        #sidebar { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        #sidebar.collapsed { width: 80px; }
+        #sidebar.collapsed .sidebar-text { display: none; }
+        #sidebar.collapsed .sidebar-header-text { display: none; }
+        #sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+        #sidebar.collapsed .section-label { display: none; }
+
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-row overflow-hidden font-sans bg-background text-slate-900">
+    <!-- Left Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex shrink-0 z-20">
+        <div class="p-6 flex items-center gap-3">
+            <div
+                class="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white shadow-lg shadow-accent/20 shrink-0">
+                <span class="material-symbols-outlined !text-2xl">app_registration</span>
+            </div>
+            <div class="sidebar-header-text">
+                <h1 class="text-sm font-bold tracking-tight text-slate-800">1st Lot Tracker</h1>
+                <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">M29 Digital Team</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/">
+                <span class="material-symbols-outlined">home</span>
+                <span class="sidebar-text">Trang chủ</span>
+            </a>
+            <div class="h-px bg-slate-100 mx-4 my-2"></div>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 bg-accent text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-accent/10"
+                href="/first-lot/">
+                <span class="material-symbols-outlined">inventory_2</span>
+                <span class="sidebar-text">Thông tin vải</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/history/">
+                <span class="material-symbols-outlined">history</span>
+                <span class="sidebar-text">1st Lot History</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/emails/">
+                <span class="material-symbols-outlined">mail</span>
+                <span class="sidebar-text">Email List</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="#">
+                <span class="material-symbols-outlined">analytics</span>
+                <span class="sidebar-text">Báo cáo</span>
+            </a>
+            <div class="pt-4 pb-2 px-4 section-label">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quản trị</p>
+            </div>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="sidebar-text">Cài đặt</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="#">
+                <span class="material-symbols-outlined">group</span>
+                <span class="sidebar-text">Vai trò người dùng</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-100 italic text-[10px] text-slate-400 text-center sidebar-text">
+            &copy; 2024 SwiftOrder Pro v2.0
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-50/50 h-screen overflow-hidden">
+        <!-- Header -->
+        <header class="bg-surface border-b border-slate-200 px-8 py-4 flex items-center justify-between gap-4 shrink-0">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()"
+                    class="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <h2 class="text-lg font-bold text-slate-800">Dashboard</h2>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="relative hidden lg:block">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+                    <input
+                        class="w-64 bg-slate-100/50 border-none rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-accent/20 focus:bg-white outline-none transition-all"
+                        placeholder="Tìm kiếm yêu cầu..." type="text" />
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="p-2 text-slate-400 hover:text-slate-600 relative">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span
+                            class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    <div
+                        class="h-10 w-10 rounded-xl border-2 border-slate-100 overflow-hidden bg-white shadow-sm flex items-center justify-center">
+                        <span class="material-symbols-outlined text-slate-400">person</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-7xl mx-auto space-y-8">
+                <!-- Stat Cards -->
+                <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                    <div
+                        class="bg-surface p-6 rounded-3xl border border-slate-200/50 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng Item</p>
+                            <span class="material-symbols-outlined text-slate-400 opacity-50">list_alt</span>
+                        </div>
+                        <p class="text-3xl font-extrabold text-slate-800">{{ stats.total if stats else '0' }}</p>
+                    </div>
+                    <div
+                        class="bg-surface p-6 rounded-3xl border border-slate-200/50 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Đã gửi (SENT)</p>
+                            <span class="material-symbols-outlined text-green-500 opacity-50">check_circle</span>
+                        </div>
+                        <p class="text-3xl font-extrabold text-slate-800">{{ stats.da_gui if stats else '0' }}</p>
+                    </div>
+                    <div
+                        class="bg-surface p-6 rounded-3xl border border-slate-200/50 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Chưa gửi</p>
+                            <span class="material-symbols-outlined text-amber-500 opacity-50">pending</span>
+                        </div>
+                        <p class="text-3xl font-extrabold text-slate-800">{{ stats.chua_gui if stats else '0' }}</p>
+                    </div>
+                    <div onclick="toggleTimeoutFilter()" class="bg-surface p-6 rounded-3xl border cursor-pointer transition-all hover:scale-[1.02] active:scale-95
+                        {% if filters.show_timeout %}border-red-500 bg-red-50 shadow-lg ring-4 ring-red-500/10 select-none{% else %}border-red-100 shadow-md shadow-red-50 bg-red-50/20{% endif %}
+                        {% if stats.qua_han > 0 and not filters.show_timeout %}animate-pulse-subtle{% endif %}">
+                        <div class="flex items-center justify-between mb-2 block">
+                            <p
+                                class="text-[11px] font-bold {% if filters.show_timeout %}text-red-700{% else %}text-red-500{% endif %} uppercase tracking-wider">
+                                {% if filters.show_timeout %}Đang lọc: Chậm PH{% else %}Chậm phản hồi (>7D){% endif %}
+                            </p>
+                            <span
+                                class="material-symbols-outlined {% if filters.show_timeout %}text-red-700{% else %}text-red-500{% endif %} opacity-50">
+                                {% if filters.show_timeout %}filter_list_off{% else %}timer_off{% endif %}
+                            </span>
+                        </div>
+                        <p
+                            class="text-3xl font-extrabold {% if filters.show_timeout %}text-red-800{% else %}text-red-600{% endif %}">
+                            {{ stats.qua_han if stats else '0' }}
+                        </p>
+                    </div>
+                    <div
+                        class="bg-surface p-6 rounded-3xl border border-indigo-100 shadow-md shadow-indigo-50 bg-indigo-50/20">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-[11px] font-bold text-indigo-400 uppercase tracking-wider">Hiệu suất gửi</p>
+                            <span class="material-symbols-outlined text-indigo-500 opacity-50">analytics</span>
+                        </div>
+                        <p class="text-3xl font-extrabold text-indigo-600">
+                            {% if stats and stats.total > 0 %}
+                            {{ (stats.da_gui / stats.total * 100)|round(1) }}%
+                            {% else %}
+                            0%
+                            {% endif %}
+                        </p>
+                    </div>
+                </section>
+
+                <!-- Data Table Container -->
+                <section class="bg-surface rounded-3xl border border-slate-200 shadow-sm flex flex-col">
+                    <div
+                        class="px-8 py-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-6 bg-white/50 backdrop-blur-sm sticky left-0 shrink-0 z-30">
+                        <div class="flex-shrink-0">
+                            <h3 class="text-lg font-bold text-slate-800">Danh sách theo dõi 1st Lot</h3>
+                            <p class="text-xs text-slate-400 font-medium">Quản lý các yêu cầu lot vải sản xuất</p>
+                        </div>
+
+                        <!-- Inline Filters -->
+                        <div class="flex-1 flex flex-wrap items-center justify-end gap-3 min-w-[600px]">
+                            <div class="w-32 relative">
+                                <input type="text" id="filter-season" list="season-list"
+                                    value="{{ filters.season if filters else '' }}"
+                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-slate-400"
+                                    placeholder="Mùa (Season)..." />
+                                <datalist id="season-list">
+                                    {% if filter_options %}{% for s in filter_options.seasons %}<option value="{{ s }}">
+                                        {% endfor %}{% endif %}
+                                </datalist>
+                            </div>
+                            <div class="w-48 relative">
+                                <input type="text" id="filter-model" list="model-list"
+                                    value="{{ filters.model_description if filters else '' }}"
+                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-slate-400"
+                                    placeholder="Loại vải (Description)..." />
+                                <datalist id="model-list">
+                                    {% if filter_options %}{% for m in filter_options.model_descriptions %}<option
+                                        value="{{ m }}">{% endfor %}{% endif %}
+                                </datalist>
+                            </div>
+                            <div class="relative w-40 group/status z-50">
+                                <div tabindex="0"
+                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal cursor-pointer flex justify-between items-center group-focus-within/status:ring-2 group-focus-within/status:ring-accent/20 group-focus-within/status:border-accent transition-all text-slate-500">
+                                    <span class="select-none truncate" id="status-filter-text">
+                                        {% if filters.status and filters.status|length > 0 %}
+                                        Đã chọn ({{ filters.status|length }})
+                                        {% else %}
+                                        Hiệu lực 1st lot...
+                                        {% endif %}
+                                    </span>
+                                    <span class="material-symbols-outlined text-[14px]">expand_more</span>
+                                </div>
+                                <div
+                                    class="absolute top-full left-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg opacity-0 invisible group-focus-within/status:opacity-100 group-focus-within/status:visible transition-all p-2 space-y-1">
+                                    <label
+                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                        <input type="checkbox" value="Còn hiệu lực"
+                                            class="status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
+                                            if 'Còn hiệu lực' in filters.status %}checked{% endif %}>
+                                        Còn hiệu lực
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                        <input type="checkbox" value="Hết hiệu lực"
+                                            class="status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
+                                            if 'Hết hiệu lực' in filters.status %}checked{% endif %}>
+                                        Hết hiệu lực
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                        <input type="checkbox" value="Chưa có"
+                                            class="status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
+                                            if 'Chưa có' in filters.status %}checked{% endif %}>
+                                        Chưa có
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="relative w-48 group/sample-type z-50">
+                                <div tabindex="0"
+                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal cursor-pointer flex justify-between items-center group-focus-within/sample-type:ring-2 group-focus-within/sample-type:ring-accent/20 group-focus-within/sample-type:border-accent transition-all text-slate-500">
+                                    <span class="select-none truncate" id="sample-type-filter-text">
+                                        {% if filters.sample_type and filters.sample_type|length > 0 %}
+                                        Sample Type ({{ filters.sample_type|length }})
+                                        {% else %}
+                                        Sample Type...
+                                        {% endif %}
+                                    </span>
+                                    <span class="material-symbols-outlined text-[14px]">expand_more</span>
+                                </div>
+                                <div
+                                    class="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg opacity-0 invisible group-focus-within/sample-type:opacity-100 group-focus-within/sample-type:visible transition-all p-2 space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                                    {% if filter_options %}
+                                    {% for st in filter_options.sample_types %}
+                                    <label
+                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                        <input type="checkbox" value="{{ st }}"
+                                            class="sample-type-checkbox text-accent rounded-sm focus:ring-accent/20" {%
+                                            if st in filters.sample_type %}checked{% endif %}>
+                                        {{ st }}
+                                    </label>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="w-40 relative">
+                                <input type="text" id="filter-item" list="item-list"
+                                    value="{{ filters.item_code if filters else '' }}"
+                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-slate-400"
+                                    placeholder="Item code vải..." />
+                                <datalist id="item-list">
+                                    {% if filter_options %}{% for i in filter_options.item_codes %}<option
+                                        value="{{ i }}">{% endfor %}{% endif %}
+                                </datalist>
+                            </div>
+
+                            {% if filters.season or filters.model_description or filters.item_code or (filters.status
+                            and filters.status|length > 0) or
+                            (filters.sample_type and filters.sample_type|length > 0) or filters.show_timeout %}
+                            <button onclick="window.location.href='/first-lot/'"
+                                class="flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-bold hover:bg-red-100 hover:scale-105 active:scale-95 transition-all outline-none border border-red-100">
+                                <span class="material-symbols-outlined text-sm">filter_alt_off</span>
+                                <span>Bỏ lọc</span>
+                            </button>
+                            {% endif %}
+
+                            <div class="h-6 w-px bg-slate-200 mx-1"></div>
+
+                            <button id="syncButton"
+                                class="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all shadow-md shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="material-symbols-outlined text-sm">sync</span>
+                                <span id="syncText">Đồng bộ</span>
+                            </button>
+                            <button id="emailButton" onclick="sendEmails('pending')"
+                                class="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 hover:scale-105 active:scale-95 transition-all shadow-md shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="material-symbols-outlined text-sm">send</span>
+                                <span id="emailText">Gửi Email mới</span>
+                            </button>
+                            <button id="resendButton" onclick="sendEmails('timeout')"
+                                class="flex items-center gap-2 px-6 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold hover:bg-amber-700 hover:scale-105 active:scale-95 transition-all shadow-md shadow-amber-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="material-symbols-outlined text-sm">history_edu</span>
+                                <span id="resendText">Gửi lại Email</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar flex-1 relative max-h-[600px]">
+                        <table class="w-full text-left border-separate border-spacing-0 min-w-[1500px]">
+                            <thead class="bg-slate-100 sticky top-0 z-20">
+                                <tr class="text-slate-800 text-[11px] font-bold uppercase tracking-wider">
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[140px]">
+                                        SER No.</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[150px]">
+                                        Item Code</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[140px] text-center">
+                                        Hiệu lực 1st lot</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[120px] text-center">
+                                        Email Status</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[150px]">
+                                        Sample Type</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[140px]">
+                                        Season</th>
+                                    <th
+                                        class="px-3 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[70px] text-center">
+                                        FG CC Code</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[120px]">
+                                        Model No.</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[250px]">
+                                        Model Description</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[250px]">
+                                        CPT Supplier</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[100px]">
+                                        Item</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[300px]">
+                                        Item Description</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                {% for item in requests %}
+                                <tr class="transition-colors group relative hover:z-30 {% if item.is_timeout %}bg-red-50/70 hover:bg-red-100/80 animate-pulse-subtle{% elif item.validity_status != 'Còn hiệu lực' %}cursor-pointer hover:bg-slate-100/80{% else %}hover:bg-slate-100/50{% endif %}"
+                                    {% if item.validity_status !='Còn hiệu lực' %} onclick="handleMasterEdit(this)"
+                                    data-item-code="{{ item.item_code }}" data-item-name="{{ item.item or '' }}"
+                                    data-model-code="{{ item.model_no or '' }}"
+                                    data-fabric-supplier="{{ item.cpt_supplier or '' }}"
+                                    data-unit="{{ item.unit or '' }}" data-color="{{ item.color or '' }}"
+                                    data-description="{{ item.item_description or '' }}" {% endif %}>
+                                    <td class="px-6 py-5 font-bold text-slate-700 text-sm">#{{ item.ser_no or '---' }}
+                                    </td>
+                                    <td class="px-6 py-5 text-xs text-accent font-black">
+                                        {{ item.item_code or '---' }}
+                                    </td>
+                                    <td class="px-6 py-5 text-center">
+                                        {% if item.sample_type == 'CPT 1st lot &PPS' %}
+                                        <div class="flex items-center justify-center gap-2 group/validity">
+                                            <span
+                                                class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase cursor-help relative group/tooltip
+                                                {% if item.validity_color == 'green' %}bg-green-50 text-green-700 border border-green-200/50
+                                                {% elif item.validity_color == 'red' %}bg-red-50 text-red-700 border border-red-200/50
+                                                {% else %}bg-slate-50 text-slate-500 border border-slate-200{% endif %}">
+                                                {{ item.validity_status }}
+
+                                                <!-- Tooltip -->
+                                                <div
+                                                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all shadow-xl z-50 normal-case text-left font-medium space-y-1.5 pointer-events-none before:content-[''] before:absolute before:top-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-t-slate-800">
+                                                    <div
+                                                        class="flex justify-between items-center border-b border-slate-700 pb-1.5 mb-1.5">
+                                                        <span class="text-slate-400">Ngày hết hạn:</span>
+                                                        <div class="text-right">
+                                                            <span class="font-bold text-accent">{{
+                                                                item.main_expiration_str if item.main_expiration_str
+                                                                else '---' }}</span>
+                                                            <span
+                                                                class="text-[8px] font-normal text-slate-300 block">({{
+                                                                item.validity_status }})</span>
+                                                        </div>
+                                                    </div>
+                                                    {% if item.reasons_str %}
+                                                    <div
+                                                        class="text-red-400 font-bold border-b border-slate-700 pb-1.5 mb-1.5 leading-snug">
+                                                        ⚠️ {{ item.reasons_str }}
+                                                    </div>
+                                                    {% endif %}
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="text-slate-400">Color Test Report:</span>
+                                                        <span class="font-bold">{{ item.color_exp_str if
+                                                            item.color_exp_str else '---' }}</span>
+                                                    </div>
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="text-slate-400">MTSR Report:</span>
+                                                        <span class="font-bold">{{ item.mtsr_exp_str if
+                                                            item.mtsr_exp_str else '---' }}</span>
+                                                    </div>
+                                                </div>
+                                            </span>
+                                            {% if item.validity_status != 'Còn hiệu lực' %}
+                                            <div class="p-1.5 text-accent bg-accent/5 transition-all shadow-sm border border-accent/20 rounded-lg group-hover:bg-accent group-hover:text-white"
+                                                title="Cập nhật thông tin 1st Lot">
+                                                <span class="material-symbols-outlined text-sm">edit</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% else %}
+                                        <span class="text-slate-300 text-[10px] font-bold uppercase italic">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-5 text-center">
+                                        {% if item.is_timeout %}
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[9px] font-black uppercase border border-red-200 shadow-sm cursor-help"
+                                            title="Đã gửi QC/Supplier vào {{ item.email_sent_at.strftime('%d/%m/%Y') if item.email_sent_at else '---' }} nhưng chưa nhận lại mẫu/cập nhật.">
+                                            <span
+                                                class="material-symbols-outlined text-[12px] animate-pulse">timer_off</span>
+                                            NOT RECEIVED
+                                        </span>
+                                        {% elif item.email_status == 'SENT' %}
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase border border-emerald-100"
+                                            title="Đã gửi vào {{ item.email_sent_at.strftime('%d/%m/%Y %H:%M') if item.email_sent_at else '---' }}">
+                                            <span class="material-symbols-outlined text-[12px]">done_all</span>
+                                            SENT
+                                        </span>
+                                        {% else %}
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[9px] font-bold uppercase border border-slate-200">
+                                            PENDING
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-5 text-xs text-slate-500 font-medium">
+                                        {{ item.sample_type or '---' }}
+                                    </td>
+                                    <td class="px-6 py-5 text-xs text-slate-600 font-semibold text-center">{{
+                                        item.season or '---' }}</td>
+                                    <td class="px-3 py-5 text-xs text-slate-500 font-medium text-center">{{
+                                        item.fg_cc_code or '---' }}</td>
+                                    <td class="px-6 py-5 text-xs text-slate-700 font-bold tracking-tight">{{
+                                        item.model_no or '---' }}</td>
+                                    <td class="px-6 py-5 text-[11px] text-slate-500 max-w-[200px] truncate"
+                                        title="{{ item.model_description }}">
+                                        {{ item.model_description or '---' }}
+                                    </td>
+                                    <td class="px-6 py-5 text-xs text-slate-500 font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                                            {{ item.cpt_supplier or '---' }}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-5 text-sm font-bold text-slate-700">{{ item.item or '---' }}</td>
+                                    <td class="px-6 py-5 text-[11px] text-slate-500 max-w-[250px] truncate"
+                                        title="{{ item.item_description }}">
+                                        {{ item.item_description or '---' }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div
+                        class="px-8 py-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 bg-slate-50/30 shrink-0">
+                        <span class="font-medium">Hiển thị từ {{ (pagination.page - 1) * pagination.limit + 1 }} đến {{
+                            [pagination.page * pagination.limit, pagination.total_count]|min }} trong tổng số {{
+                            pagination.total_count }} kết quả</span>
+                        <div class="flex items-center gap-1">
+                            <!-- Prev Page -->
+                            {% if pagination.has_prev %}
+                            <a href="{{ request.url.include_query_params(page=pagination.page - 1) }}"
+                                class="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-white hover:text-indigo-600 transition-all">
+                                <span class="material-symbols-outlined text-sm">chevron_left</span>
+                            </a>
+                            {% endif %}
+
+                            <!-- Page Numbers -->
+                            {% for p in range(1, pagination.total_pages + 1) %}
+                            {% if p == pagination.page %}
+                            <span
+                                class="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-lg font-bold shadow-md shadow-indigo-100">{{
+                                p }}</span>
+                            {% elif p == 1 or p == pagination.total_pages or (p >= pagination.page - 2 and p <=
+                                pagination.page + 2) %} <a href="{{ request.url.include_query_params(page=p) }}"
+                                class="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-white hover:text-indigo-600 transition-all font-medium">
+                                {{ p }}</a>
+                                {% elif p == 2 or p == pagination.total_pages - 1 %}
+                                <span class="px-1 text-slate-300">...</span>
+                                {% endif %}
+                                {% endfor %}
+
+                                <!-- Next Page -->
+                                {% if pagination.has_next %}
+                                <a href="{{ request.url.include_query_params(page=pagination.page + 1) }}"
+                                    class="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-white hover:text-indigo-600 transition-all">
+                                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                                </a>
+                                {% endif %}
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for adding new request -->
+    <div id="modal"
+        class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+            <div class="p-8 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-accent/10 text-accent rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined !text-2xl">add_box</span>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">New 1st Lot Request</h3>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Project Input Form</p>
+                    </div>
+                </div>
+                <button onclick="closeModal()"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form id="requestForm" class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Mã hàng
+                            <span class="text-red-400">*</span></label>
+                        <input name="item_code" required
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent focus:bg-white outline-none transition-all"
+                            placeholder="Nhập mã hàng vải" type="text" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Số
+                            SER</label>
+                        <input name="ser_no"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent focus:bg-white outline-none transition-all"
+                            placeholder="Số serial" type="text" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Mã
+                            Model</label>
+                        <input name="model_no"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent focus:bg-white outline-none transition-all"
+                            placeholder="Mã model" type="text" />
+                    </div>
+                    <div class="space-y-1">
+                        <label
+                            class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Mùa</label>
+                        <input name="season"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent focus:bg-white outline-none transition-all"
+                            placeholder="VD: SS24, FW25" type="text" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nhà
+                            cung cấp</label>
+                        <input name="fg_supplier"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent focus:bg-white outline-none transition-all"
+                            placeholder="Tên nhà cung cấp" type="text" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Ngày dự
+                            kiến về</label>
+                        <input name="expected_arrival_date"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent focus:bg-white outline-none transition-all"
+                            placeholder="DD/MM/YYYY" type="text" />
+                    </div>
+                </div>
+            </form>
+            <div class="p-8 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50 shrink-0">
+                <button type="button" onclick="closeModal()"
+                    class="px-6 py-3 text-sm font-bold text-slate-600 hover:text-slate-800 transition-colors">Hủy</button>
+                <button type="submit" form="requestForm"
+                    class="px-8 py-3 bg-accent text-white rounded-2xl text-sm font-bold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20">Tạo
+                    yêu cầu</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Update Modal (Hidden by default) -->
+    <div id="masterModal" class="fixed inset-0 z-[100] hidden overflow-hidden">
+        <div id="modalOverlay"
+            class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 opacity-0"
+            onclick="closeMasterModal()"></div>
+
+        <div id="modalContent"
+            class="absolute right-0 top-0 bottom-0 w-full max-w-4xl bg-white shadow-2xl flex flex-col transition-transform duration-300 translate-x-full">
+            <!-- Modal Header -->
+            <div
+                class="px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+                <div class="flex items-center gap-5">
+                    <div
+                        class="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center text-accent shadow-sm">
+                        <span class="material-symbols-outlined text-3xl">inventory_2</span>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-800 tracking-tight">Quản lý Master 1st Lot</h2>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mã hàng:</span>
+                            <span id="modalDisplayItemCode"
+                                class="text-xs font-black text-accent bg-accent/5 px-2 py-0.5 rounded-md">---</span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="closeMasterModal()"
+                    class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <!-- Form Area -->
+                    <div class="space-y-8">
+                        <div class="flex items-center gap-3">
+                            <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Thông tin &
+                                Trạng thái</h4>
+                            <div class="h-px flex-1 bg-slate-100"></div>
+                        </div>
+                        <form id="masterForm" class="space-y-6">
+                            <input type="hidden" id="formItemCode" name="item_code">
+
+                            <!-- Hidden fields to support creation pre-fill -->
+                            <input type="hidden" id="formFabricName" name="fabric_name">
+                            <input type="hidden" id="formModelCode" name="model_code">
+                            <input type="hidden" id="formFabricSupplier" name="fabric_supplier">
+                            <input type="hidden" id="formUnit" name="unit">
+                            <input type="hidden" id="formColor" name="color">
+                            <input type="hidden" id="formDescription" name="description">
+
+                            <div class="space-y-2.5">
+                                <label
+                                    class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Ngày
+                                    nhận (1st Lot)</label>
+                                <div class="relative group">
+                                    <span
+                                        class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-accent">event</span>
+                                    <input type="date" id="received_date" name="received_date" required
+                                        class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-5 py-4 text-sm focus:ring-4 focus:ring-accent/5 focus:border-accent outline-none transition-all font-bold text-slate-700">
+                                </div>
+                            </div>
+
+                            <div class="space-y-2.5">
+                                <label
+                                    class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Color
+                                    Test Date</label>
+                                <div class="relative group">
+                                    <span
+                                        class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-accent">lab_profile</span>
+                                    <input type="date" id="color_test_report_received_date"
+                                        name="color_test_report_received_date"
+                                        class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-5 py-4 text-sm focus:ring-4 focus:ring-accent/5 focus:border-accent outline-none transition-all font-bold text-slate-700">
+                                </div>
+                            </div>
+
+                            <div class="space-y-2.5">
+                                <label
+                                    class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">MTSR
+                                    Received Date</label>
+                                <div class="relative group">
+                                    <span
+                                        class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-accent">verified_user</span>
+                                    <input type="date" id="mtsr_received_date" name="mtsr_received_date"
+                                        class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-5 py-4 text-sm focus:ring-4 focus:ring-accent/5 focus:border-accent outline-none transition-all font-bold text-slate-700">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2.5">
+                                    <label
+                                        class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Thông
+                                        tin 1st Lot</label>
+                                    <select id="lot_info_status" name="lot_info_status" onchange="toggleReason('info')"
+                                        class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm focus:ring-4 focus:ring-accent/5 focus:border-accent outline-none transition-all font-bold text-slate-700">
+                                        <option value="OK">OK - Chính xác</option>
+                                        <option value="NOK">NOK - Sai sót</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-2.5">
+                                    <label
+                                        class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Chất
+                                        lượng 1st Lot</label>
+                                    <select id="lot_quality_status" name="lot_quality_status"
+                                        onchange="toggleReason('quality')"
+                                        class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm focus:ring-4 focus:ring-accent/5 focus:border-accent outline-none transition-all font-bold text-slate-700">
+                                        <option value="OK">OK - Đạt</option>
+                                        <option value="NOK">NOK - Không đạt</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="info_reason_container" class="space-y-2.5 hidden">
+                                <label class="text-[10px] font-extrabold text-red-500 uppercase tracking-widest ml-1">Lý
+                                    do (Thông tin)</label>
+                                <textarea id="lot_info_reason" name="lot_info_reason"
+                                    class="w-full bg-red-50/30 border border-red-100 rounded-2xl px-5 py-4 text-sm outline-none min-h-[80px]"></textarea>
+                            </div>
+
+                            <div id="quality_reason_container" class="space-y-2.5 hidden">
+                                <label class="text-[10px] font-extrabold text-red-500 uppercase tracking-widest ml-1">Lý
+                                    do (Chất lượng)</label>
+                                <textarea id="lot_quality_reason" name="lot_quality_reason"
+                                    class="w-full bg-red-50/30 border border-red-100 rounded-2xl px-5 py-4 text-sm outline-none min-h-[80px]"></textarea>
+                            </div>
+
+                            <button type="submit"
+                                class="w-full py-5 bg-accent text-white rounded-2xl font-extrabold text-sm shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-3">
+                                <span class="material-symbols-outlined text-lg">save</span>
+                                Cập nhật Master
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- History Area -->
+                    <div class="bg-slate-50 rounded-[2.5rem] p-8 border border-slate-100 flex flex-col min-h-[400px]">
+                        <div class="flex items-center justify-between mb-8">
+                            <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Nhật ký thay đổi
+                            </h4>
+                            <span class="material-symbols-outlined text-slate-300">history</span>
+                        </div>
+                        <div id="historyTimeline" class="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
+                            <!-- Items will be injected -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function openModal() {
+            document.getElementById('modal').classList.remove('hidden');
+        }
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        document.getElementById('requestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/requests/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Lỗi khi tạo yêu cầu');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        // Filtering logic
+        let debounceTimer;
+        function updateFilters() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const season = document.getElementById('filter-season').value;
+                const model = document.getElementById('filter-model').value;
+                const item = document.getElementById('filter-item').value;
+
+                const statusCheckboxes = document.querySelectorAll('.status-checkbox:checked');
+                const statuses = Array.from(statusCheckboxes).map(cb => cb.value);
+
+                const sampleTypeCheckboxes = document.querySelectorAll('.sample-type-checkbox:checked');
+                const sampleTypes = Array.from(sampleTypeCheckboxes).map(cb => cb.value);
+
+                const params = new URLSearchParams(window.location.search);
+                if (season) params.set('season', season); else params.delete('season');
+                if (model) params.set('model_description', model); else params.delete('model_description');
+                if (item) params.set('item_code', item); else params.delete('item_code');
+
+                // Clear and re-add multi-select filters
+                params.delete('status');
+                statuses.forEach(s => params.append('status', s));
+
+                params.delete('sample_type');
+                sampleTypes.forEach(st => params.append('sample_type', st));
+
+                params.set('page', 1); // Reset to first page on filter
+                window.location.href = `/first-lot/?${params.toString()}`;
+            }, 600);
+        }
+
+        function toggleTimeoutFilter() {
+            const params = new URLSearchParams(window.location.search);
+            const isTimeoutActive = params.get('show_timeout') === 'true';
+
+            if (isTimeoutActive) {
+                params.delete('show_timeout');
+            } else {
+                params.set('show_timeout', 'true');
+            }
+            params.set('page', 1);
+            window.location.href = `/first-lot/?${params.toString()}`;
+        }
+
+        document.getElementById('filter-season').addEventListener('input', updateFilters);
+        document.getElementById('filter-model').addEventListener('input', updateFilters);
+        document.getElementById('filter-item').addEventListener('input', updateFilters);
+        document.querySelectorAll('.status-checkbox').forEach(cb => cb.addEventListener('change', updateFilters));
+        document.querySelectorAll('.sample-type-checkbox').forEach(cb => cb.addEventListener('change', updateFilters));
+
+        // Sync Data logic
+        const syncButton = document.getElementById('syncButton');
+        const syncText = document.getElementById('syncText');
+
+        if (syncButton) {
+            syncButton.addEventListener('click', async () => {
+                if (!confirm('Bạn có chắc muốn đồng bộ dữ liệu từ Google Sheets? Dữ liệu hiện tại sẽ được cập nhật mới.')) return;
+
+                syncButton.disabled = true;
+                const originalIcon = syncButton.querySelector('.material-symbols-outlined').innerText;
+                syncButton.querySelector('.material-symbols-outlined').innerText = 'sync';
+                syncButton.querySelector('.material-symbols-outlined').classList.add('animate-spin');
+                if (syncText) syncText.innerText = 'Đang đồng bộ...';
+
+                try {
+                    const response = await fetch('/api/sync', { method: 'POST' });
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        alert(`Đồng bộ thành công! Đã nạp ${result.count} dòng dữ liệu.`);
+                        location.reload();
+                    } else {
+                        alert('Lỗi khi đồng bộ: ' + (result.detail || 'Không xác định'));
+                    }
+                } catch (error) {
+                    console.error('Sync Error:', error);
+                    alert('Đã xảy ra lỗi kết nối.');
+                } finally {
+                    syncButton.disabled = false;
+                    syncButton.querySelector('.material-symbols-outlined').innerText = originalIcon;
+                    syncButton.querySelector('.material-symbols-outlined').classList.remove('animate-spin');
+                    if (syncText) syncText.innerText = 'Đồng bộ';
+                }
+            });
+        }
+
+
+        // Master Modal Logic
+        async function handleMasterEdit(btn) {
+            const d = btn.dataset;
+            openMasterModal(
+                d.itemCode,
+                d.itemName,
+                d.modelCode,
+                d.fabricSupplier,
+                d.unit,
+                d.color,
+                d.description
+            );
+        }
+
+        async function openMasterModal(itemCode, fabricName, modelCode, fabricSupplier, unit, color, description) {
+            const modal = document.getElementById('masterModal');
+            const overlay = document.getElementById('modalOverlay');
+            const content = document.getElementById('modalContent');
+            const displayCode = document.getElementById('modalDisplayItemCode');
+
+            displayCode.innerText = itemCode;
+            document.getElementById('formItemCode').value = itemCode;
+
+            // Set basic pre-fill info (will be overwritten if master exists on server)
+            document.getElementById('formFabricName').value = fabricName;
+            document.getElementById('formModelCode').value = modelCode;
+            document.getElementById('formFabricSupplier').value = fabricSupplier;
+            document.getElementById('formUnit').value = unit || 'M';
+            document.getElementById('formColor').value = color;
+            document.getElementById('formDescription').value = description;
+
+            // Reset form fields
+            document.getElementById('received_date').value = '';
+            document.getElementById('color_test_report_received_date').value = '';
+            document.getElementById('mtsr_received_date').value = '';
+            document.getElementById('lot_info_status').value = 'OK';
+            document.getElementById('lot_quality_status').value = 'OK';
+            document.getElementById('lot_info_reason').value = '';
+            document.getElementById('lot_quality_reason').value = '';
+
+            // Try to fetch existing master data
+            try {
+                const response = await fetch(`/api/master/get/${itemCode}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data) {
+                        if (data.received_date) document.getElementById('received_date').value = data.received_date;
+                        if (data.color_test_report_received_date) document.getElementById('color_test_report_received_date').value = data.color_test_report_received_date;
+                        if (data.mtsr_received_date) document.getElementById('mtsr_received_date').value = data.mtsr_received_date;
+
+                        document.getElementById('lot_info_status').value = data.lot_info_status || 'OK';
+                        document.getElementById('lot_info_reason').value = data.lot_info_reason || '';
+                        document.getElementById('lot_quality_status').value = data.lot_quality_status || 'OK';
+                        document.getElementById('lot_quality_reason').value = data.lot_quality_reason || '';
+
+                        if (data.fabric_name) document.getElementById('formFabricName').value = data.fabric_name;
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching master data:", error);
+            }
+
+            toggleReason('info');
+            toggleReason('quality');
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                overlay.classList.add('opacity-100');
+                content.classList.remove('translate-x-full');
+                content.classList.add('translate-x-0');
+            }, 10);
+
+            fetchHistory(itemCode);
+        }
+
+        function toggleReason(type) {
+            const status = document.getElementById(`lot_${type}_status`).value;
+            const container = document.getElementById(`${type}_reason_container`);
+            if (status === 'NOK') {
+                container.classList.remove('hidden');
+                document.getElementById(`lot_${type}_reason`).required = true;
+            } else {
+                container.classList.add('hidden');
+                document.getElementById(`lot_${type}_reason`).required = false;
+            }
+        }
+
+        function closeMasterModal() {
+            const modal = document.getElementById('masterModal');
+            const overlay = document.getElementById('modalOverlay');
+            const content = document.getElementById('modalContent');
+
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('opacity-0');
+            content.classList.remove('translate-x-0');
+            content.classList.add('translate-x-full');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        async function fetchHistory(itemCode) {
+            const container = document.getElementById('historyTimeline');
+            container.innerHTML = '<div class="flex items-center justify-center py-10"><span class="material-symbols-outlined animate-spin text-accent text-3xl">sync</span></div>';
+
+            try {
+                const response = await fetch(`/api/master/history/${itemCode}`);
+                const history = await response.json();
+
+                if (history.length === 0) {
+                    container.innerHTML = `<div class="text-center py-10 opacity-30 italic text-xs">Chưa có nhật ký</div>`;
+                    return;
+                }
+
+                container.innerHTML = history.map(h => `
+                    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[9px] font-black uppercase text-accent bg-accent/5 px-2 py-0.5 rounded">${h.change_type}</span>
+                            <span class="text-[9px] text-slate-400 font-bold">${new Date(h.changed_at).toLocaleDateString()}</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-[11px] font-bold">
+                            <span class="text-slate-300 line-through">${h.old_date || '---'}</span>
+                            <span class="material-symbols-outlined text-[10px] text-slate-200">arrow_forward</span>
+                            <span class="text-slate-800">${h.new_date || '---'}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = `<div class="text-center py-10 text-red-400 text-xs font-bold uppercase italic">Lỗi lấy lịch sử</div>`;
+            }
+        }
+
+        document.getElementById('masterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            for (let k in data) if (data[k] === "") data[k] = null;
+
+            try {
+                const response = await fetch('/api/master/update-dates', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('Cập nhật Master thành công!');
+                    location.reload();
+                } else {
+                    const err = await response.json();
+                    alert('Lỗi: ' + (err.detail || 'Không xác định'));
+                }
+            } catch (e) {
+                alert('Lỗi kết nối server');
+            }
+        });
+
+        async function sendEmails(mode = 'pending') {
+            const btn = document.getElementById(mode === 'pending' ? 'emailButton' : 'resendButton');
+            const term = document.getElementById(mode === 'pending' ? 'emailText' : 'resendText');
+            const originalText = term.innerText;
+            const endpoint = mode === 'pending' ? '/api/send-emails-bulk' : '/api/send-emails-timeout';
+
+            if (!confirm(`Bạn có chắc muốn ${mode === 'pending' ? 'gửi email cho các yêu cầu mới' : 'gửi lại email nhắc nhở cho các NCC chưa phản hồi'}?`)) return;
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            term.innerText = 'Đang gửi...';
+
+            try {
+                const response = await fetch(endpoint, { method: 'POST' });
+                const result = await response.json();
+
+                if (response.ok) {
+                    if (result.sent_suppliers === 0) {
+                        alert(mode === 'pending' ? 'Không có email nào cần gửi mới' : 'Không có yêu cầu chậm phản hồi nào cần gửi lại');
+                    } else {
+                        alert(`Thành công! Đã gửi ${result.sent_suppliers} email (${result.rows_total} dòng dữ liệu).`);
+                        location.reload();
+                    }
+                } else {
+                    alert('Lỗi: ' + (result.detail || 'Không xác định'));
+                }
+            } catch (e) {
+                alert('Lỗi kết nối server');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                term.innerText = originalText;
+            }
+        }
+    </script>
+</body>
+
+</html>
