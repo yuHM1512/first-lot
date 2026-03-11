@@ -49,7 +49,7 @@ class FirstLotRequestBase(BaseModel):
     fg_sample_pieces: Optional[str] = None
     cpt_supplier: Optional[str] = None
     remark: Optional[str] = None
-    expected_arrival_date: Optional[str] = None
+    expected_arrival_date: Optional[date] = None
     pick_up: Optional[str] = None
     update_etd: Optional[str] = None
     courrier_number: Optional[str] = None
@@ -67,6 +67,8 @@ class FirstLotRequestBase(BaseModel):
     address: Optional[str] = None
     kt: Optional[str] = None
     md: Optional[str] = None
+    first_lot_received_status: Optional[str] = None
+    resend_count: Optional[int] = 0
 
 class FirstLotRequestCreate(FirstLotRequestBase):
     pass
@@ -78,6 +80,8 @@ class FirstLotRequest(FirstLotRequestBase):
     email_sent_at: Optional[datetime] = None
     master_received_date: Optional[date] = None
     master_using_time_years: Optional[int] = None
+    first_lot_received_status: Optional[str] = None
+    resend_count: Optional[int] = 0
 
     class Config:
         from_attributes = True
@@ -113,6 +117,10 @@ class FirstLotDateUpdate(BaseModel):
     lot_info_reason: Optional[str] = None
     lot_quality_status: Optional[str] = None
     lot_quality_reason: Optional[str] = None
+    
+    request_id: Optional[int] = None
+    received_status: Optional[str] = None
+    remark: Optional[str] = None
 
 class SupplierEmailBase(BaseModel):
     supplier_name: Optional[str] = None
@@ -123,6 +131,22 @@ class SupplierEmailCreate(SupplierEmailBase):
     pass
 
 class SupplierEmail(SupplierEmailBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+class StaffEmailBase(BaseModel):
+    employee_code: Optional[str] = None
+    department: Optional[str] = None
+    role: str
+    name: str
+    email: str
+
+class StaffEmailCreate(StaffEmailBase):
+    pass
+
+class StaffEmail(StaffEmailBase):
     id: int
     created_at: datetime
 

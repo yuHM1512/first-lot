@@ -85,11 +85,13 @@
                 <span class="material-symbols-outlined">history</span>
                 <span class="sidebar-text">1st Lot History</span>
             </a>
+            {% if user.role in ['admin', 'MD'] %}
             <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
                 href="/emails/">
                 <span class="material-symbols-outlined">mail</span>
                 <span class="sidebar-text">Email List</span>
             </a>
+            {% endif %}
             <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
                 href="#">
                 <span class="material-symbols-outlined">analytics</span>
@@ -124,6 +126,7 @@
                     class="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
                     <span class="material-symbols-outlined">menu</span>
                 </button>
+                <img src="/static/Logo.png" alt="Logo" class="h-8 w-auto object-contain">
                 <h2 class="text-lg font-bold text-slate-800">Dashboard</h2>
             </div>
             <div class="flex items-center gap-6">
@@ -140,9 +143,21 @@
                         <span
                             class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                     </button>
-                    <div
-                        class="h-10 w-10 rounded-xl border-2 border-slate-100 overflow-hidden bg-white shadow-sm flex items-center justify-center">
-                        <span class="material-symbols-outlined text-slate-400">person</span>
+                    <div class="flex items-center gap-4 border-l border-slate-100 pl-6 ml-3">
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs font-black text-slate-800">{{ user.name if user else 'Guest' }}</span>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{{
+                                user.department if user else '---' }}</span>
+                        </div>
+                        <div
+                            class="h-10 w-10 rounded-xl border-2 border-slate-100 overflow-hidden bg-white shadow-sm flex items-center justify-center text-accent">
+                            <span class="material-symbols-outlined">account_circle</span>
+                        </div>
+                        <a href="/logout"
+                            class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title="Đăng xuất">
+                            <span class="material-symbols-outlined">logout</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -222,6 +237,33 @@
 
                         <!-- Inline Filters -->
                         <div class="flex-1 flex flex-wrap items-center justify-end gap-3 min-w-[600px]">
+                            <div class="relative w-48 group/sample-type z-50">
+                                <div tabindex="0"
+                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal cursor-pointer flex justify-between items-center group-focus-within/sample-type:ring-2 group-focus-within/sample-type:ring-accent/20 group-focus-within/sample-type:border-accent transition-all text-slate-500">
+                                    <span class="select-none truncate" id="sample-type-filter-text">
+                                        {% if filters.sample_type and filters.sample_type|length > 0 %}
+                                        Sample Type ({{ filters.sample_type|length }})
+                                        {% else %}
+                                        Sample Type...
+                                        {% endif %}
+                                    </span>
+                                    <span class="material-symbols-outlined text-[14px]">expand_more</span>
+                                </div>
+                                <div
+                                    class="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg opacity-0 invisible group-focus-within/sample-type:opacity-100 group-focus-within/sample-type:visible transition-all p-2 space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                                    {% if filter_options %}
+                                    {% for st in filter_options.sample_types %}
+                                    <label
+                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                        <input type="checkbox" value="{{ st }}"
+                                            class="sample-type-checkbox text-accent rounded-sm focus:ring-accent/20" {%
+                                            if st in filters.sample_type %}checked{% endif %}>
+                                        {{ st }}
+                                    </label>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
                             <div class="w-32 relative">
                                 <input type="text" id="filter-season" list="season-list"
                                     value="{{ filters.season if filters else '' }}"
@@ -279,31 +321,48 @@
                                     </label>
                                 </div>
                             </div>
-                            <div class="relative w-48 group/sample-type z-50">
+                            <div class="relative w-40 group/email-status z-50">
                                 <div tabindex="0"
-                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal cursor-pointer flex justify-between items-center group-focus-within/sample-type:ring-2 group-focus-within/sample-type:ring-accent/20 group-focus-within/sample-type:border-accent transition-all text-slate-500">
-                                    <span class="select-none truncate" id="sample-type-filter-text">
-                                        {% if filters.sample_type and filters.sample_type|length > 0 %}
-                                        Sample Type ({{ filters.sample_type|length }})
+                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal cursor-pointer flex justify-between items-center group-focus-within/email-status:ring-2 group-focus-within/email-status:ring-accent/20 group-focus-within/email-status:border-accent transition-all text-slate-500">
+                                    <span class="select-none truncate" id="email-status-filter-text">
+                                        {% if filters.email_status and filters.email_status|length > 0 %}
+                                        Email: Đã chọn ({{ filters.email_status|length }})
                                         {% else %}
-                                        Sample Type...
+                                        Email Status...
                                         {% endif %}
                                     </span>
                                     <span class="material-symbols-outlined text-[14px]">expand_more</span>
                                 </div>
                                 <div
-                                    class="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg opacity-0 invisible group-focus-within/sample-type:opacity-100 group-focus-within/sample-type:visible transition-all p-2 space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
-                                    {% if filter_options %}
-                                    {% for st in filter_options.sample_types %}
+                                    class="absolute top-full left-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg opacity-0 invisible group-focus-within/email-status:opacity-100 group-focus-within/email-status:visible transition-all p-2 space-y-1">
                                     <label
                                         class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
-                                        <input type="checkbox" value="{{ st }}"
-                                            class="sample-type-checkbox text-accent rounded-sm focus:ring-accent/20" {%
-                                            if st in filters.sample_type %}checked{% endif %}>
-                                        {{ st }}
+                                        <input type="checkbox" value="Chưa yêu cầu"
+                                            class="email-status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
+                                            if 'Chưa yêu cầu' in filters.email_status %}checked{% endif %}>
+                                        Chưa yêu cầu
                                     </label>
-                                    {% endfor %}
-                                    {% endif %}
+                                    <label
+                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                        <input type="checkbox" value="Đã yêu cầu"
+                                            class="email-status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
+                                            if 'Đã yêu cầu' in filters.email_status %}checked{% endif %}>
+                                        Đã yêu cầu
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                        <input type="checkbox" value="Tái yêu cầu"
+                                            class="email-status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
+                                            if 'Tái yêu cầu' in filters.email_status %}checked{% endif %}>
+                                        Tái yêu cầu
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                        <input type="checkbox" value="Cần tái yêu cầu"
+                                            class="email-status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
+                                            if 'Cần tái yêu cầu' in filters.email_status %}checked{% endif %}>
+                                        Cần tái yêu cầu
+                                    </label>
                                 </div>
                             </div>
                             <div class="w-40 relative">
@@ -317,9 +376,11 @@
                                 </datalist>
                             </div>
 
-                            {% if filters.season or filters.model_description or filters.item_code or (filters.status
-                            and filters.status|length > 0) or
-                            (filters.sample_type and filters.sample_type|length > 0) or filters.show_timeout %}
+                            {% if filters.season or filters.model_description or filters.item_code or
+                            (filters.status and filters.status|length > 0) or
+                            (filters.sample_type and filters.sample_type|length > 0) or
+                            (filters.email_status and filters.email_status|length > 0) or
+                            filters.show_timeout %}
                             <button onclick="window.location.href='/first-lot/'"
                                 class="flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-bold hover:bg-red-100 hover:scale-105 active:scale-95 transition-all outline-none border border-red-100">
                                 <span class="material-symbols-outlined text-sm">filter_alt_off</span>
@@ -334,6 +395,7 @@
                                 <span class="material-symbols-outlined text-sm">sync</span>
                                 <span id="syncText">Đồng bộ</span>
                             </button>
+                            {% if user.role in ['admin', 'MD'] %}
                             <button id="emailButton" onclick="sendEmails('pending')"
                                 class="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 hover:scale-105 active:scale-95 transition-all shadow-md shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span class="material-symbols-outlined text-sm">send</span>
@@ -344,6 +406,7 @@
                                 <span class="material-symbols-outlined text-sm">history_edu</span>
                                 <span id="resendText">Gửi lại Email</span>
                             </button>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -361,8 +424,17 @@
                                         class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[140px] text-center">
                                         Hiệu lực 1st lot</th>
                                     <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[140px] text-center">
+                                        Ngày dự kiến nhận</th>
+                                    <th
                                         class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[120px] text-center">
                                         Email Status</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[150px] text-center">
+                                        Tình trạng tiếp nhận</th>
+                                    <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[200px]">
+                                        Thông tin</th>
                                     <th
                                         class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[150px]">
                                         Sample Type</th>
@@ -397,7 +469,9 @@
                                     data-model-code="{{ item.model_no or '' }}"
                                     data-fabric-supplier="{{ item.cpt_supplier or '' }}"
                                     data-unit="{{ item.unit or '' }}" data-color="{{ item.color or '' }}"
-                                    data-description="{{ item.item_description or '' }}" {% endif %}>
+                                    data-description="{{ item.item_description or '' }}" data-request-id="{{ item.id }}"
+                                    data-received-status="{{ item.first_lot_received_status or '' }}"
+                                    data-remark="{{ item.remark or '' }}" {% endif %}>
                                     <td class="px-6 py-5 font-bold text-slate-700 text-sm">#{{ item.ser_no or '---' }}
                                     </td>
                                     <td class="px-6 py-5 text-xs text-accent font-black">
@@ -458,27 +532,54 @@
                                         {% endif %}
                                     </td>
                                     <td class="px-6 py-5 text-center">
-                                        {% if item.is_timeout %}
-                                        <span
-                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[9px] font-black uppercase border border-red-200 shadow-sm cursor-help"
-                                            title="Đã gửi QC/Supplier vào {{ item.email_sent_at.strftime('%d/%m/%Y') if item.email_sent_at else '---' }} nhưng chưa nhận lại mẫu/cập nhật.">
-                                            <span
-                                                class="material-symbols-outlined text-[12px] animate-pulse">timer_off</span>
-                                            NOT RECEIVED
-                                        </span>
-                                        {% elif item.email_status == 'SENT' %}
-                                        <span
-                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase border border-emerald-100"
-                                            title="Đã gửi vào {{ item.email_sent_at.strftime('%d/%m/%Y %H:%M') if item.email_sent_at else '---' }}">
-                                            <span class="material-symbols-outlined text-[12px]">done_all</span>
-                                            SENT
-                                        </span>
+                                        {% if item.expected_arrival_date %}
+                                        <div class="text-[11px] font-bold text-slate-700">
+                                            {{ item.expected_arrival_date.strftime('%d-%m-%Y') }}
+                                        </div>
                                         {% else %}
+                                        <span class="text-slate-300 text-[10px] font-bold italic">---</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-5 text-center">
+                                        {% if item.is_timeout %}
+                                        <div class="flex flex-col items-center gap-1">
+                                            <span
+                                                class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[9px] font-black uppercase border border-red-200 shadow-sm cursor-help"
+                                                title="Chậm phản hồi (>7 ngày)">
+                                                <span
+                                                    class="material-symbols-outlined text-[12px] animate-pulse">timer_off</span>
+                                                NOT RECEIVED
+                                            </span>
+                                            <span class="text-[8px] font-bold text-amber-600 uppercase">{{
+                                                item.display_email_status }}</span>
+                                        </div>
+                                        {% else %}
+                                        {% set color = item.email_status_color %}
                                         <span
-                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[9px] font-bold uppercase border border-slate-200">
-                                            PENDING
+                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-{{ color }}-50 text-{{ color }}-700 text-[9px] font-black uppercase border border-{{ color }}-100"
+                                            title="{% if item.email_sent_at %}Đã gửi vào {{ item.email_sent_at.strftime('%d/%m/%Y %H:%M') }}{% endif %}">
+                                            {% if item.display_email_status in ['Đã yêu cầu', 'Tái yêu cầu'] %}
+                                            <span class="material-symbols-outlined text-[12px]">done_all</span>
+                                            {% endif %}
+                                            {{ item.display_email_status }}
                                         </span>
                                         {% endif %}
+                                    </td>
+                                    <td class="px-6 py-5 text-center">
+                                        {% if item.first_lot_received_status %}
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200 shadow-sm">
+                                            {{ item.first_lot_received_status }}
+                                        </span>
+                                        {% else %}
+                                        <span class="text-slate-300 text-[10px] font-bold italic">---</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-5">
+                                        <div class="text-[11px] text-slate-600 font-medium line-clamp-2"
+                                            title="{{ item.remark }}">
+                                            {{ item.remark or '---' }}
+                                        </div>
                                     </td>
                                     <td class="px-6 py-5 text-xs text-slate-500 font-medium">
                                         {{ item.sample_type or '---' }}
@@ -671,6 +772,7 @@
                         </div>
                         <form id="masterForm" class="space-y-6">
                             <input type="hidden" id="formItemCode" name="item_code">
+                            <input type="hidden" id="formRequestId" name="request_id">
 
                             <!-- Hidden fields to support creation pre-fill -->
                             <input type="hidden" id="formFabricName" name="fabric_name">
@@ -739,6 +841,26 @@
                                         <option value="NOK">NOK - Không đạt</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            <div class="space-y-2.5">
+                                <label
+                                    class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Tình
+                                    trạng tiếp nhận</label>
+                                <select id="received_status" name="received_status"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm focus:ring-4 focus:ring-accent/5 focus:border-accent outline-none transition-all font-bold text-slate-700">
+                                    <option value="">--- (Chưa xác định)</option>
+                                    <option value="Đã tiếp nhận">Đã tiếp nhận</option>
+                                    <option value="Đã bàn giao">Đã bàn giao</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-2.5">
+                                <label
+                                    class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Thông
+                                    tin bổ sung</label>
+                                <textarea id="remark" name="remark" placeholder="Nhập cập nhật tình trạng mới nhất..."
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm focus:ring-4 focus:ring-accent/5 focus:border-accent outline-none transition-all min-h-[60px]"></textarea>
                             </div>
 
                             <div id="info_reason_container" class="space-y-2.5 hidden">
@@ -828,6 +950,9 @@
                 const sampleTypeCheckboxes = document.querySelectorAll('.sample-type-checkbox:checked');
                 const sampleTypes = Array.from(sampleTypeCheckboxes).map(cb => cb.value);
 
+                const emailStatusCheckboxes = document.querySelectorAll('.email-status-checkbox:checked');
+                const emailStatuses = Array.from(emailStatusCheckboxes).map(cb => cb.value);
+
                 const params = new URLSearchParams(window.location.search);
                 if (season) params.set('season', season); else params.delete('season');
                 if (model) params.set('model_description', model); else params.delete('model_description');
@@ -840,10 +965,18 @@
                 params.delete('sample_type');
                 sampleTypes.forEach(st => params.append('sample_type', st));
 
+                params.delete('email_status');
+                emailStatuses.forEach(es => params.append('email_status', es));
+
                 params.set('page', 1); // Reset to first page on filter
                 window.location.href = `/first-lot/?${params.toString()}`;
             }, 600);
         }
+
+        // Add listeners to new checkboxes
+        document.querySelectorAll('.email-status-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateFilters);
+        });
 
         function toggleTimeoutFilter() {
             const params = new URLSearchParams(window.location.search);
@@ -911,11 +1044,14 @@
                 d.fabricSupplier,
                 d.unit,
                 d.color,
-                d.description
+                d.description,
+                d.requestId,
+                d.receivedStatus,
+                d.remark
             );
         }
 
-        async function openMasterModal(itemCode, fabricName, modelCode, fabricSupplier, unit, color, description) {
+        async function openMasterModal(itemCode, fabricName, modelCode, fabricSupplier, unit, color, description, requestId, receivedStatus, remark) {
             const modal = document.getElementById('masterModal');
             const overlay = document.getElementById('modalOverlay');
             const content = document.getElementById('modalContent');
@@ -923,6 +1059,9 @@
 
             displayCode.innerText = itemCode;
             document.getElementById('formItemCode').value = itemCode;
+            document.getElementById('formRequestId').value = requestId || '';
+            document.getElementById('received_status').value = receivedStatus || '';
+            document.getElementById('remark').value = remark || '';
 
             // Set basic pre-fill info (will be overwritten if master exists on server)
             document.getElementById('formFabricName').value = fabricName;
@@ -1095,6 +1234,7 @@
                 term.innerText = originalText;
             }
         }
+
     </script>
 </body>
 

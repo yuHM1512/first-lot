@@ -46,7 +46,7 @@ class FirstLotRequest(Base):
     fg_sample_pieces = Column(String)
     cpt_supplier = Column(String)
     remark = Column(Text)
-    expected_arrival_date = Column(String)
+    expected_arrival_date = Column(Date)
     pick_up = Column(String)
     update_etd = Column(String)
     courrier_number = Column(String)
@@ -69,6 +69,8 @@ class FirstLotRequest(Base):
     email_sent_at = Column(DateTime(timezone=True))
     
     item_code = Column(String, index=True) # Field to link with master data
+    first_lot_received_status = Column(String)  # "Đã tiếp nhận" or "Đã bàn giao"
+    resend_count = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 class FirstLotHistory(Base):
     __tablename__ = "first_lot_history"
@@ -92,6 +94,8 @@ class SupplierEmail(Base):
 class StaffEmail(Base):
     __tablename__ = "staff_emails"
     id = Column(Integer, primary_key=True, index=True)
+    employee_code = Column(String, unique=True, index=True)
+    department = Column(String)
     role = Column(String)  # 'KT' or 'MD'
     name = Column(String)
     email = Column(String)

@@ -77,6 +77,14 @@ def process_and_save_data(df: pd.DataFrame, db: Session):
         for key in ['item', 'item_code']:
             if key in db_data and db_data[key] and db_data[key].endswith('.0'):
                 db_data[key] = db_data[key][:-2]
+                
+        # Parse Dates
+        from datetime import datetime
+        if db_data.get('expected_arrival_date'):
+            try:
+                db_data['expected_arrival_date'] = datetime.strptime(db_data['expected_arrival_date'], "%Y-%m-%d").date()
+            except ValueError:
+                db_data['expected_arrival_date'] = None
 
         db_request = models.FirstLotRequest(**db_data)
         db.add(db_request)

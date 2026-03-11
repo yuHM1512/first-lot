@@ -86,23 +86,27 @@ def send_email_to_supplier(cpt_supplier: str, mode: str = 'pending'):
                 (models.FirstLotRequest.email_status != 'SENT') | (models.FirstLotRequest.email_status == None)
             ).all()
         elif mode == 'timeout':
-            # Rows already SENT but timed out
-            all_sent_rows = query.filter(models.FirstLotRequest.email_status == 'SENT').all()
+            # Rows already SENT but timed out, or overdue based on expected_arrival_date
+            all_rows = query.all()
             rows = []
-            for r in all_sent_rows:
-                if not r.email_sent_at: continue
+            for r in all_rows:
+                # Check validity from Master
+                master = db.query(models.FirstLotMaster).filter(models.FirstLotMaster.item_code == r.item_code).first()
+                validity_status = "Chưa có"
+                if master and master.received_date:
+                    expiration_date = master.received_date + relativedelta(years=master.using_time_years or 2)
+                    if today <= expiration_date:
+                        validity_status = "Còn hiệu lực"
                 
-                # Check timeout logic: >7 days and (no master or expired)
+                if validity_status == "Còn hiệu lực":
+                    continue
+                
                 is_timeout = False
-                if today > (r.email_sent_at.date() + timedelta(days=7)):
-                    # Check validity from Master
-                    master = db.query(models.FirstLotMaster).filter(models.FirstLotMaster.item_code == r.item_code).first()
-                    if not master or not master.received_date:
-                        is_timeout = True
-                    else:
-                        expiration_date = master.received_date + relativedelta(years=master.using_time_years or 2)
-                        if today > expiration_date:
-                            is_timeout = True
+                if r.email_status == "SENT" and r.email_sent_at and today > (r.email_sent_at.date() + timedelta(days=7)):
+                    is_timeout = True
+                
+                if r.expected_arrival_date and today >= r.expected_arrival_date:
+                    is_timeout = True
                 
                 if is_timeout:
                     rows.append(r)
@@ -194,6 +198,8 @@ def send_email_to_supplier(cpt_supplier: str, mode: str = 'pending'):
         for r in rows:
             r.email_status = "SENT"
             r.email_sent_at = now
+            if mode == 'timeout':
+                r.resend_count = (r.resend_count or 0) + 1
         db.commit()
 
         return {"status": "success", "to": supplier.email, "cc": cc_emails_str, "rows": len(rows)}

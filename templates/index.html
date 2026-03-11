@@ -81,9 +81,30 @@
     <div class="bg-blob bg-blue-100 top-[-100px] left-[-100px] animate-pulse"></div>
     <div class="bg-blob bg-indigo-100 bottom-[-100px] right-[-100px] animate-pulse" style="animation-delay: 2s"></div>
 
+    <!-- User Profile & Logout -->
+    <div class="absolute top-8 right-8 z-50 flex items-center gap-4">
+        <div class="flex flex-col items-end">
+            <span class="text-sm font-black text-slate-800">{{ user.name if user else 'Guest' }}</span>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ user.department if user else
+                '---' }}</span>
+        </div>
+        <div
+            class="h-12 w-12 rounded-2xl bg-white shadow-lg border border-slate-100 flex items-center justify-center text-accent">
+            <span class="material-symbols-outlined !text-3xl">account_circle</span>
+        </div>
+        <a href="/logout"
+            class="h-12 px-4 rounded-2xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center gap-2 hover:bg-red-100 transition-all font-bold text-sm">
+            <span class="material-symbols-outlined !text-xl">logout</span>
+            Thoát
+        </a>
+    </div>
+
     <div class="max-w-6xl w-full space-y-12 relative z-10">
         <!-- Hero Section -->
         <header class="text-center space-y-4">
+            <div class="flex justify-center mb-6">
+                <img src="/static/Logo.png" alt="Logo" class="h-20 w-auto object-contain">
+            </div>
             <div
                 class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-blue-100/50 shadow-sm animate-bounce">
                 M29 Digital Team
@@ -116,6 +137,26 @@
                         class="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">arrow_forward</span>
                 </div>
             </a>
+
+            <!-- Email List Module (Authorized only) -->
+            {% if user and user.role in ['admin', 'MD'] %}
+            <a href="/emails/" class="glass-card p-10 rounded-[3rem] group">
+                <div
+                    class="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mb-8 shadow-xl shadow-emerald-200 module-icon">
+                    <span class="material-symbols-outlined !text-4xl">mail</span>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-3 group-hover:text-emerald-600 transition-colors">Quản
+                    lý Email</h3>
+                <p class="text-slate-500 text-sm leading-relaxed mb-6">
+                    Quản lý danh sách email Nhà cung cấp và Email nội bộ phục vụ gửi báo cáo.
+                </p>
+                <div class="flex items-center gap-2 text-emerald-600 font-bold text-sm">
+                    Truy cập Module
+                    <span
+                        class="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </div>
+            </a>
+            {% endif %}
 
             <!-- Placeholder 2 -->
             <div class="glass-card p-10 rounded-[3rem] opacity-60 grayscale cursor-not-allowed">

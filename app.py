@@ -1,6 +1,6 @@
 import os
-from fastapi import FastAPI, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Depends, HTTPException, Request, Query, Form, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -16,25 +16,79 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI(title="1st Lot Management System")
 
 # Templates and Static files setup
-# (We will create these directories and files later)
-# app.mount("/static", StaticFiles(directory="static"), name="static")
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates = Jinja2Templates(directory="templates")
 
-from fastapi import FastAPI, Depends, HTTPException, Request, Query
+# Helper for authentication
+def get_user_from_cookie(request: Request):
+    return request.cookies.get("user_code")
 
-# ... (keep imports) ...
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request, next: Optional[str] = None):
+    return templates.TemplateResponse("login.html", {"request": request, "next": next})
+
+@app.post("/api/login")
+async def api_login(response: Response, employee_code: str = Form(...), db: Session = Depends(get_db)):
+    if employee_code == "admin":
+        staff = models.StaffEmail(employee_code="admin", name="Administrator", role="admin", department="IT")
+    else:
+        staff = db.query(models.StaffEmail).filter(models.StaffEmail.employee_code == employee_code).first()
+        if not staff:
+            raise HTTPException(status_code=401, detail="Mã nhân viên không tồn tại trong hệ thống")
+    
+    response.set_cookie(key="user_code", value=staff.employee_code, max_age=86400 * 30) # 30 days
+    
+    return {
+        "status": "success",
+        "employee_code": staff.employee_code,
+        "name": staff.name,
+        "role": staff.role,
+        "department": staff.department
+    }
+
+@app.get("/logout")
+async def logout():
+    response = RedirectResponse(url="/login")
+    response.delete_cookie("user_code")
+    return response
 
 @app.get("/", response_class=HTMLResponse)
-async def read_index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+async def read_index(request: Request, db: Session = Depends(get_db)):
+    user_code = get_user_from_cookie(request)
+    user = None
+    
+    if user_code:
+        if user_code == "admin":
+            user = models.StaffEmail(employee_code="admin", name="Administrator", role="admin", department="IT")
+        else:
+            user = db.query(models.StaffEmail).filter(models.StaffEmail.employee_code == user_code).first()
+    
+    return templates.TemplateResponse("index.html", {"request": request, "user": user})
 
 @app.get("/first-lot/", response_class=HTMLResponse)
 async def read_first_lot(request: Request, page: int = 1, limit: int = 100, 
                   season: str = None, model_description: str = None, item_code: str = None,
                   status: list[str] = Query(default=[]),
                   sample_type: list[str] = Query(default=[]),
+                  email_status: list[str] = Query(default=[]),
                   show_timeout: bool = False,
                   db: Session = Depends(get_db)):
+    
+    user_code = get_user_from_cookie(request)
+    if not user_code:
+        return RedirectResponse(url=f"/login?next={request.url.path}")
+
+    # Get user info
+    if user_code == "admin":
+        user = models.StaffEmail(employee_code="admin", name="Administrator", role="admin", department="IT")
+    else:
+        user = db.query(models.StaffEmail).filter(models.StaffEmail.employee_code == user_code).first()
+    
+    # KT Role: Force sample_type filter if not specified
+    if user and user.role == "KT" and not sample_type:
+        sample_type = ["CPT 1st lot &PPS", "1st Lot"] # Adjust based on actual data values
+    
     skip = (page - 1) * limit
     all_requests = crud.get_first_lot_requests(db, skip=0, limit=999999, 
                                          season=season, model_description=model_description, 
@@ -85,15 +139,35 @@ async def read_first_lot(request: Request, page: int = 1, limit: int = 100,
 
         # Timeout Logic (Global)
         r.is_timeout = False
-        if r.email_status == "SENT" and r.email_sent_at:
-            if today > (r.email_sent_at.date() + timedelta(days=7)) and r.validity_status != "Còn hiệu lực":
-                r.email_status = "NOT RECEIVED"
+        if r.validity_status != "Còn hiệu lực":
+            if r.email_status == "SENT" and r.email_sent_at and today > (r.email_sent_at.date() + timedelta(days=7)):
                 r.is_timeout = True
+                
+            # Additional Warning Logic for 1st lot samples
+            if r.sample_type and ("1st lot" in r.sample_type.lower() or "1st" in r.sample_type.lower()):
+                if hasattr(r, 'expected_arrival_date') and r.expected_arrival_date and today >= r.expected_arrival_date:
+                    r.is_timeout = True
+
+        # Display Email Status Logic (User Request)
+        if r.is_timeout:
+            r.display_email_status = "Cần tái yêu cầu"
+            r.email_status_color = "red"
+        elif r.resend_count and r.resend_count > 0:
+            r.display_email_status = "Tái yêu cầu"
+            r.email_status_color = "amber"
+        elif r.email_status == "SENT":
+            r.display_email_status = "Đã yêu cầu"
+            r.email_status_color = "emerald"
+        else:
+            r.display_email_status = "Chưa yêu cầu"
+            r.email_status_color = "slate"
         
         # Apply filters (Multi-status + Timeout)
         if status and len(status) > 0 and r.validity_status not in status:
             continue
         if show_timeout and not r.is_timeout:
+            continue
+        if email_status and len(email_status) > 0 and r.display_email_status not in email_status:
             continue
             
         pre_filtered.append(r)
@@ -137,8 +211,10 @@ async def read_first_lot(request: Request, page: int = 1, limit: int = 100,
             "item_code": item_code or "",
             "status": status or [],
             "sample_type": sample_type or [],
+            "email_status": email_status or [],
             "show_timeout": show_timeout
         },
+        "user": user,
         "filter_options": filter_options
     })
 
@@ -170,6 +246,15 @@ async def sync_data():
 @app.get("/history/", response_class=HTMLResponse)
 async def read_history_page(request: Request, page: int = 1, limit: int = 100, item_code: str = None, fabric_name: str = None,
                             status: list[str] = Query(default=[]), db: Session = Depends(get_db)):
+    user_code = get_user_from_cookie(request)
+    if not user_code:
+        return RedirectResponse(url=f"/login?next={request.url.path}")
+
+    if user_code == "admin":
+        user = models.StaffEmail(employee_code="admin", name="Administrator", role="admin", department="IT")
+    else:
+        user = db.query(models.StaffEmail).filter(models.StaffEmail.employee_code == user_code).first()
+
     skip = (page - 1) * limit
     all_masters = crud.get_first_lot_master(db, skip=0, limit=999999, item_code=item_code, fabric_name=fabric_name)
     
@@ -226,6 +311,7 @@ async def read_history_page(request: Request, page: int = 1, limit: int = 100, i
         "pagination": pagination,
         "stats": stats,
         "today": today,
+        "user": user,
         "filters": {
             "item_code": item_code or "",
             "fabric_name": fabric_name or "",
@@ -249,16 +335,64 @@ async def get_item_history(item_code: str, db: Session = Depends(get_db)):
     history = crud.get_first_lot_history(db, item_code)
     return history
 
+@app.put("/api/requests/{request_id}/received-status")
+async def update_request_received_status(request_id: int, status_data: dict, db: Session = Depends(get_db)):
+    status = status_data.get("status")
+    if status not in ["Đã tiếp nhận", "Đã bàn giao", None]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    updated = crud.update_received_status(db, request_id, status)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Request not found")
+    return {"status": "success", "message": "Received status updated"}
+
 # ── Supplier Email Routes ──────────────────────────────
 @app.get("/emails/", response_class=HTMLResponse)
 async def email_list_page(request: Request, db: Session = Depends(get_db)):
+    user_code = get_user_from_cookie(request)
+    if not user_code:
+        return RedirectResponse(url=f"/login?next={request.url.path}")
+    
+    if user_code == "admin":
+        user = models.StaffEmail(employee_code="admin", name="Administrator", role="admin", department="IT")
+    else:
+        user = db.query(models.StaffEmail).filter(models.StaffEmail.employee_code == user_code).first()
+    
+    # Restriction: Only admin and MD can access email list
+    if not user or user.role not in ["admin", "MD"]:
+        return HTMLResponse(content="<h3>Bạn không có quyền truy cập trang này</h3>", status_code=403)
+
     suppliers = crud.get_supplier_emails(db)
+    staff_emails = crud.get_staff_emails(db)
     return templates.TemplateResponse("email_list.html", {
         "request": request,
+        "user": user,
         "suppliers": suppliers,
-        "total": len(suppliers)
+        "staff_emails": staff_emails,
+        "total": len(suppliers),
+        "total_staff": len(staff_emails)
     })
 
+# ── Staff Email API ──────────────────────────────
+@app.post("/api/staff-email")
+async def create_staff_email_api(data: schemas.StaffEmailCreate, db: Session = Depends(get_db)):
+    created = crud.create_staff_email(db, data)
+    return {"status": "success", "id": created.id}
+
+@app.put("/api/staff-email/{staff_id}")
+async def update_staff_email_api(staff_id: int, data: schemas.StaffEmailCreate, db: Session = Depends(get_db)):
+    updated = crud.update_staff_email(db, staff_id, data)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Staff not found")
+    return {"status": "success", "message": "Staff updated"}
+
+@app.delete("/api/staff-email/{staff_id}")
+async def delete_staff_email_api(staff_id: int, db: Session = Depends(get_db)):
+    deleted = crud.delete_staff_email(db, staff_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Staff not found")
+    return {"status": "success", "message": "Staff deleted"}
+
+# ── Supplier Email API ──────────────────────────────
 @app.put("/api/supplier-email/{supplier_id}")
 async def update_supplier_email_api(supplier_id: int, data: schemas.SupplierEmailCreate, db: Session = Depends(get_db)):
     updated = crud.update_supplier_email(db, supplier_id, data)
@@ -277,6 +411,7 @@ async def delete_supplier_email_api(supplier_id: int, db: Session = Depends(get_
     if not deleted:
         raise HTTPException(status_code=404, detail="Supplier not found")
     return {"status": "success", "message": "Supplier deleted"}
+
 
 @app.post("/api/supplier-email/sync")
 async def sync_supplier_emails():
@@ -362,5 +497,5 @@ async def email_preview(request: Request, cpt_supplier: str = None, db: Session 
 if __name__ == "__main__":
     import uvicorn
     host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", 8009))
+    port = int(os.getenv("PORT", 8010))
     uvicorn.run(app, host=host, port=port)

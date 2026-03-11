@@ -73,9 +73,21 @@ def get_first_lot_requests(db: Session, skip: int = 0, limit: int = 100, season:
         req.master_lot_info_reason = row[6]
         req.master_lot_quality_status = row[7]
         req.master_lot_quality_reason = row[8]
+        # first_lot_received_status is already in req (models.FirstLotRequest)
         requests.append(req)
     
     return requests
+
+# (rest of existing functions...)
+
+def update_received_status(db: Session, request_id: int, status: str):
+    db_request = db.query(models.FirstLotRequest).filter(models.FirstLotRequest.id == request_id).first()
+    if not db_request:
+        return None
+    db_request.first_lot_received_status = status
+    db.commit()
+    db.refresh(db_request)
+    return db_request
 
 def get_first_lot_requests_count(db: Session, season: str = None, model_description: str = None, 
                                  item_code: str = None, sample_types: list[str] = None):
@@ -194,6 +206,14 @@ def save_first_lot_master(db: Session, update_data: schemas.FirstLotDateUpdate):
                 
                 setattr(master, field, new_val)
     
+    # Update linked request if ID is provided
+    if update_data.request_id:
+        req = db.query(models.FirstLotRequest).filter(models.FirstLotRequest.id == update_data.request_id).first()
+        if req:
+            req.first_lot_received_status = update_data.received_status
+            if update_data.remark is not None:
+                req.remark = update_data.remark
+    
     db.commit()
     db.refresh(master)
     return master
@@ -247,5 +267,36 @@ def delete_supplier_email(db: Session, supplier_id: int):
     if not supplier:
         return False
     db.delete(supplier)
+    db.commit()
+    return True
+# ── Staff Email CRUD ──────────────────────────────
+def get_staff_emails(db: Session):
+    return db.query(models.StaffEmail).order_by(models.StaffEmail.role, models.StaffEmail.name).all()
+
+def update_staff_email(db: Session, staff_id: int, data: schemas.StaffEmailCreate):
+    staff = db.query(models.StaffEmail).filter(models.StaffEmail.id == staff_id).first()
+    if not staff:
+        return None
+    staff.employee_code = data.employee_code
+    staff.department = data.department
+    staff.role = data.role
+    staff.name = data.name
+    staff.email = data.email
+    db.commit()
+    db.refresh(staff)
+    return staff
+
+def create_staff_email(db: Session, data: schemas.StaffEmailCreate):
+    staff = models.StaffEmail(**data.model_dump())
+    db.add(staff)
+    db.commit()
+    db.refresh(staff)
+    return staff
+
+def delete_staff_email(db: Session, staff_id: int):
+    staff = db.query(models.StaffEmail).filter(models.StaffEmail.id == staff_id).first()
+    if not staff:
+        return False
+    db.delete(staff)
     db.commit()
     return True
