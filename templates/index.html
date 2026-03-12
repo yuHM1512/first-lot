@@ -138,50 +138,28 @@
                 </div>
             </a>
 
-            <!-- Email List Module (Authorized only) -->
-            {% if user and user.role in ['admin', 'MD'] %}
-            <a href="/emails/" class="glass-card p-10 rounded-[3rem] group">
-                <div
-                    class="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mb-8 shadow-xl shadow-emerald-200 module-icon">
-                    <span class="material-symbols-outlined !text-4xl">mail</span>
-                </div>
-                <h3 class="text-2xl font-bold text-slate-800 mb-3 group-hover:text-emerald-600 transition-colors">Quản
-                    lý Email</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-6">
-                    Quản lý danh sách email Nhà cung cấp và Email nội bộ phục vụ gửi báo cáo.
-                </p>
-                <div class="flex items-center gap-2 text-emerald-600 font-bold text-sm">
-                    Truy cập Module
-                    <span
-                        class="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">arrow_forward</span>
-                </div>
-            </a>
-            {% endif %}
+            <!-- Email List Module (Authorized only) - TEMPORARILY REMOVED AS REQUESTED -->
 
-            <!-- Placeholder 2 -->
-            <div class="glass-card p-10 rounded-[3rem] opacity-60 grayscale cursor-not-allowed">
-                <div class="w-16 h-16 bg-slate-200 text-slate-400 rounded-2xl flex items-center justify-center mb-8">
-                    <span class="material-symbols-outlined !text-4xl">factory</span>
+            <!-- Coming Soon Block 1 -->
+            <div
+                class="glass-card p-10 rounded-[3rem] opacity-50 grayscale cursor-not-allowed flex flex-col items-center justify-center min-h-[300px] text-center">
+                <div class="w-16 h-16 bg-slate-200 text-slate-400 rounded-2xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined !text-4xl">hourglass_empty</span>
                 </div>
-                <h3 class="text-2xl font-bold text-slate-800 mb-3">Line Management</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-6">
-                    Quản lý năng suất chuyền may và kiểm soát chất lượng đầu ra.
-                </p>
+                <h3 class="text-xl font-bold text-slate-600 mb-2">Tính năng mới</h3>
                 <div
                     class="inline-flex px-3 py-1 bg-slate-100 text-slate-400 rounded-lg text-[10px] uppercase font-bold tracking-wider">
-                    Sắp ra mắt
+                    Coming Soon
                 </div>
             </div>
 
-            <!-- Placeholder 3 -->
-            <div class="glass-card p-10 rounded-[3rem] opacity-60 grayscale cursor-not-allowed">
-                <div class="w-16 h-16 bg-slate-200 text-slate-400 rounded-2xl flex items-center justify-center mb-8">
-                    <span class="material-symbols-outlined !text-4xl">monitoring</span>
+            <!-- Coming Soon Block 2 -->
+            <div
+                class="glass-card p-10 rounded-[3rem] opacity-50 grayscale cursor-not-allowed flex flex-col items-center justify-center min-h-[300px] text-center">
+                <div class="w-16 h-16 bg-slate-200 text-slate-400 rounded-2xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined !text-4xl">construction</span>
                 </div>
-                <h3 class="text-2xl font-bold text-slate-800 mb-3">Supply Chain KPIs</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-6">
-                    Phân tích hiệu suất nhà cung cấp và dự báo rủi ro chuỗi cung ứng.
-                </p>
+                <h3 class="text-xl font-bold text-slate-600 mb-2">Đang phát triển</h3>
                 <div
                     class="inline-flex px-3 py-1 bg-slate-100 text-slate-400 rounded-lg text-[10px] uppercase font-bold tracking-wider">
                     Sắp ra mắt

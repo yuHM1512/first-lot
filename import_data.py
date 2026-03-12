@@ -91,6 +91,7 @@ def process_and_save_data(df: pd.DataFrame, db: Session):
         count += 1
     
     db.commit()
+
     return count
 
 def import_from_excel(file_path: str):

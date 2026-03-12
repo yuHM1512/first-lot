@@ -23,7 +23,7 @@ SMTP_PORT = 587
 # Jinja2 template loader
 template_env = Environment(loader=FileSystemLoader("templates"))
 
-def build_email_html(supplier_name, summary_items, detail_rows, md_name="N/A", md_email="N/A"):
+def build_email_html(supplier_name, summary_items, detail_rows, md_name="N/A", md_email="N/A", show_1st_lot_note=False):
     """Render the email HTML template with data."""
     template = template_env.get_template("email_template.html")
     return template.render(
@@ -31,7 +31,8 @@ def build_email_html(supplier_name, summary_items, detail_rows, md_name="N/A", m
         summary_items=summary_items,
         detail_rows=detail_rows,
         md_name=md_name,
-        md_email=md_email
+        md_email=md_email,
+        show_1st_lot_note=show_1st_lot_note
     )
 
 def send_email(to_emails, subject, html_body, cc_emails=None):
@@ -71,51 +72,78 @@ def send_email_to_supplier(cpt_supplier: str, mode: str = 'pending'):
         # Get supplier email info
         supplier = db.query(models.SupplierEmail).filter(models.SupplierEmail.cpt_supplier == cpt_supplier).first()
         if not supplier:
-            print(f"[ERROR] Supplier not found: {cpt_supplier}")
-            return {"status": "error", "message": f"Supplier not found: {cpt_supplier}"}
+            print(f"[SKIP] Supplier not found in email list: {cpt_supplier}")
+            return {"status": "skipped", "message": f"Supplier not found: {cpt_supplier}"}
+        
+        # Skip if email is null/empty
+        if not supplier.email or not supplier.email.strip():
+            print(f"[SKIP] Supplier has no email, skipping: {cpt_supplier}")
+            return {"status": "skipped", "message": f"No email for supplier: {cpt_supplier}"}
 
-        # Base query
-        query = db.query(models.FirstLotRequest).filter(
-            models.FirstLotRequest.cpt_supplier == cpt_supplier,
-            models.FirstLotRequest.sample_type.ilike('%1st lot%')
+        # Base query with EmailLog join - NO Sample Type filter initially
+        query = db.query(
+            models.FirstLotRequest,
+            models.EmailLog.email_status.label("log_email_status"),
+            models.EmailLog.email_sent_at.label("log_email_sent_at"),
+            models.EmailLog.resend_count.label("log_resend_count"),
+            models.SupplierEmail.supplier_name.label("supplier_lookup_name")
+        ).join(
+            models.SupplierEmail,
+            models.FirstLotRequest.cpt_supplier == models.SupplierEmail.cpt_supplier
+        ).outerjoin(
+            models.EmailLog,
+            models.FirstLotRequest.ser_no == models.EmailLog.ser_no
+        ).filter(
+            models.FirstLotRequest.cpt_supplier == cpt_supplier
         )
 
-        if mode == 'pending':
-            # Rows NOT yet sent
-            rows = query.filter(
-                (models.FirstLotRequest.email_status != 'SENT') | (models.FirstLotRequest.email_status == None)
-            ).all()
-        elif mode == 'timeout':
-            # Rows already SENT but timed out, or overdue based on expected_arrival_date
-            all_rows = query.all()
-            rows = []
-            for r in all_rows:
-                # Check validity from Master
-                master = db.query(models.FirstLotMaster).filter(models.FirstLotMaster.item_code == r.item_code).first()
-                validity_status = "Chưa có"
-                if master and master.received_date:
-                    expiration_date = master.received_date + relativedelta(years=master.using_time_years or 2)
-                    if today <= expiration_date:
-                        validity_status = "Còn hiệu lực"
-                
-                if validity_status == "Còn hiệu lực":
-                    continue
-                
-                is_timeout = False
-                if r.email_status == "SENT" and r.email_sent_at and today > (r.email_sent_at.date() + timedelta(days=7)):
-                    is_timeout = True
-                
-                if r.expected_arrival_date and today >= r.expected_arrival_date:
-                    is_timeout = True
-                
-                if is_timeout:
-                    rows.append(r)
-        else:
-            return {"status": "error", "message": f"Invalid mode: {mode}"}
+        results = query.all()
+        rows = []
+        import crud
+
+        for res in results:
+            r = res[0]
+            r.email_status = res[1]
+            r.email_sent_at = res[2]
+            r.resend_count = res[3] or 0
+            # res[4] is supplier_lookup_name
+            
+            is_1st_lot = r.sample_type == "CPT 1st lot &PPS"
+            
+            if mode == 'pending':
+                # Split Logic as per request:
+                if is_1st_lot:
+                    # Logic 1: 1st Lot -> Only if validity is "Xin mới"
+                    # Use our refined check_first_lot_status logic
+                    validity = crud.check_first_lot_status(db, r.item_code, res[4])
+                    if validity != "OK":
+                        rows.append(r)
+                else:
+                    # Logic 2: Other samples -> Only if not SENT
+                    if r.email_status != 'SENT':
+                        rows.append(r)
+            
+            elif mode == 'timeout':
+                # Timeout mainly targets 1st lots that are pending completion
+                if is_1st_lot:
+                    validity = crud.check_first_lot_status(db, r.item_code, res[4])
+                    if validity != "OK":
+                        is_timeout = False
+                        if r.email_status == "SENT" and r.email_sent_at and today > (r.email_sent_at.date() + timedelta(days=7)):
+                            is_timeout = True
+                        if r.expected_arrival_date and today >= r.expected_arrival_date:
+                            is_timeout = True
+                        if is_timeout:
+                            rows.append(r)
+                # (Samples typically don't have timeout resend requirement specified yet, but we skip them here to avoid noise)
 
         if not rows:
-            print(f"[ERROR] No 1st lot requests found for mode {mode}: {cpt_supplier}")
-            return {"status": "error", "message": "No requests found"}
+            print(f"[SKIP] No matching rows for mode {mode} (Validity/Sent filter): {cpt_supplier}")
+            return {"status": "skipped", "message": "No relevant rows to send"}
+
+        # Build summary...
+        # ... (rest of function)
+        show_1st_lot_note = any(r.sample_type == "CPT 1st lot &PPS" for r in rows)
 
         # Build summary (unique FG CC Code + Season pairs)
         seen = set()
@@ -182,7 +210,8 @@ def send_email_to_supplier(cpt_supplier: str, mode: str = 'pending'):
             summary_items=summary_items,
             detail_rows=rows,
             md_name=md_name,
-            md_email=md_email
+            md_email=md_email,
+            show_1st_lot_note=show_1st_lot_note
         )
 
         # Send
@@ -193,13 +222,36 @@ def send_email_to_supplier(cpt_supplier: str, mode: str = 'pending'):
             cc_emails=cc_emails_str
         )
 
-        # Mark as SENT in database (update timestamp)
+        # Mark as SENT in database (via EmailLog)
         now = datetime.now()
         for r in rows:
-            r.email_status = "SENT"
-            r.email_sent_at = now
+            # We no longer update r.email_status etc. because they aren't Columns.
+            # We simply use r.resend_count that was mapped above for logic.
+            new_resend_count = (r.resend_count or 0)
             if mode == 'timeout':
-                r.resend_count = (r.resend_count or 0) + 1
+                new_resend_count += 1
+            
+            # 🔒 Persist to email_log (survives future data resyncs)
+            if r.ser_no:
+                log = db.query(models.EmailLog).filter_by(ser_no=r.ser_no).first()
+                if log:
+                    log.email_status = "SENT"
+                    log.email_sent_at = now
+                    log.resend_count = new_resend_count
+                    log.supplier_name = supplier.supplier_name
+                    if r.cpt_supplier:
+                        log.fabric_supplier = r.cpt_supplier
+                else:
+                    db.add(models.EmailLog(
+                        ser_no=r.ser_no,
+                        item=r.item,
+                        season=r.season,
+                        fabric_supplier=r.cpt_supplier,
+                        supplier_name=supplier.supplier_name,
+                        email_status="SENT",
+                        email_sent_at=now,
+                        resend_count=new_resend_count
+                    ))
         db.commit()
 
         return {"status": "success", "to": supplier.email, "cc": cc_emails_str, "rows": len(rows)}
@@ -215,8 +267,6 @@ def send_all_pending_emails():
     db = SessionLocal()
     try:
         pending_suppliers = db.query(models.FirstLotRequest.cpt_supplier).filter(
-            models.FirstLotRequest.sample_type.ilike('%1st lot%'),
-            (models.FirstLotRequest.email_status != 'SENT') | (models.FirstLotRequest.email_status == None),
             models.FirstLotRequest.cpt_supplier.isnot(None)
         ).distinct().all()
 
@@ -230,6 +280,7 @@ def send_all_pending_emails():
             if result["status"] == "success":
                 sent_count += 1
                 total_rows += result["rows"]
+            # status == "skipped" is silently ignored (no email, no error)
         
         return {"status": "success", "sent_suppliers": sent_count, "rows_total": total_rows}
     finally:
@@ -243,27 +294,15 @@ def send_all_timeout_emails():
     today = date.today()
     
     try:
-        sent_rows = db.query(models.FirstLotRequest).filter(
-            models.FirstLotRequest.sample_type.ilike('%1st lot%'),
-            models.FirstLotRequest.email_status == 'SENT',
+        suppliers = db.query(models.FirstLotRequest.cpt_supplier).filter(
             models.FirstLotRequest.cpt_supplier.isnot(None)
-        ).all()
+        ).distinct().all()
         
         timeout_suppliers = set()
-        for r in sent_rows:
-            if not r.email_sent_at: continue
-            if today > (r.email_sent_at.date() + timedelta(days=7)):
-                master = db.query(models.FirstLotMaster).filter(models.FirstLotMaster.item_code == r.item_code).first()
-                is_timeout = False
-                if not master or not master.received_date:
-                    is_timeout = True
-                else:
-                    expiration = master.received_date + relativedelta(years=master.using_time_years or 2)
-                    if today > expiration:
-                        is_timeout = True
-                
-                if is_timeout:
-                    timeout_suppliers.add(r.cpt_supplier)
+        for (cpt_supplier,) in suppliers:
+             # We let send_email_to_supplier do the heavy filtering for timeout
+             # To minimize calls, we could pre-filter for SENT rows, but to be simple and robust:
+             timeout_suppliers.add(cpt_supplier)
 
         if not timeout_suppliers:
             return {"status": "success", "sent_suppliers": 0, "rows_total": 0}

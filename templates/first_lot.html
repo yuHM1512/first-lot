@@ -93,9 +93,9 @@
             </a>
             {% endif %}
             <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
-                href="#">
+                href="/dashboard/">
                 <span class="material-symbols-outlined">analytics</span>
-                <span class="sidebar-text">Báo cáo</span>
+                <span class="sidebar-text">Dashboard</span>
             </a>
             <div class="pt-4 pb-2 px-4 section-label">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quản trị</p>
@@ -153,6 +153,12 @@
                             class="h-10 w-10 rounded-xl border-2 border-slate-100 overflow-hidden bg-white shadow-sm flex items-center justify-center text-accent">
                             <span class="material-symbols-outlined">account_circle</span>
                         </div>
+                        <button onclick="window.location.href='/dashboard/'"
+                            class="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2"
+                            title="Dashboard">
+                            <span class="material-symbols-outlined">analytics</span>
+                            <span class="hidden md:inline text-sm font-medium">Dashboard</span>
+                        </button>
                         <a href="/logout"
                             class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                             title="Đăng xuất">
@@ -467,7 +473,7 @@
                                     {% if item.validity_status !='Còn hiệu lực' %} onclick="handleMasterEdit(this)"
                                     data-item-code="{{ item.item_code }}" data-item-name="{{ item.item or '' }}"
                                     data-model-code="{{ item.model_no or '' }}"
-                                    data-fabric-supplier="{{ item.cpt_supplier or '' }}"
+                                    data-fabric-supplier="{{ item.supplier_lookup_name or '' }}"
                                     data-unit="{{ item.unit or '' }}" data-color="{{ item.color or '' }}"
                                     data-description="{{ item.item_description or '' }}" data-request-id="{{ item.id }}"
                                     data-received-status="{{ item.first_lot_received_status or '' }}"
@@ -1080,9 +1086,9 @@
             document.getElementById('lot_info_reason').value = '';
             document.getElementById('lot_quality_reason').value = '';
 
-            // Try to fetch existing master data
+            // Try to fetch existing master data with item_code and supplier_name
             try {
-                const response = await fetch(`/api/master/get/${itemCode}`);
+                const response = await fetch(`/api/master/get/${itemCode}?supplier_name=${encodeURIComponent(fabricSupplier || '')}`);
                 if (response.ok) {
                     const data = await response.json();
                     if (data) {
@@ -1113,7 +1119,7 @@
                 content.classList.add('translate-x-0');
             }, 10);
 
-            fetchHistory(itemCode);
+            fetchHistory(itemCode, fabricSupplier);
         }
 
         function toggleReason(type) {
@@ -1143,12 +1149,12 @@
             }, 300);
         }
 
-        async function fetchHistory(itemCode) {
+        async function fetchHistory(itemCode, supplierName) {
             const container = document.getElementById('historyTimeline');
             container.innerHTML = '<div class="flex items-center justify-center py-10"><span class="material-symbols-outlined animate-spin text-accent text-3xl">sync</span></div>';
 
             try {
-                const response = await fetch(`/api/master/history/${itemCode}`);
+                const response = await fetch(`/api/master/history/${itemCode}?supplier_name=${encodeURIComponent(supplierName || '')}`);
                 const history = await response.json();
 
                 if (history.length === 0) {

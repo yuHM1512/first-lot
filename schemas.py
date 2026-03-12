@@ -67,8 +67,7 @@ class FirstLotRequestBase(BaseModel):
     address: Optional[str] = None
     kt: Optional[str] = None
     md: Optional[str] = None
-    first_lot_received_status: Optional[str] = None
-    resend_count: Optional[int] = 0
+    md: Optional[str] = None
 
 class FirstLotRequestCreate(FirstLotRequestBase):
     pass
@@ -77,6 +76,7 @@ class FirstLotRequest(FirstLotRequestBase):
     id: int
     status: str
     created_at: datetime
+    email_status: Optional[str] = None
     email_sent_at: Optional[datetime] = None
     master_received_date: Optional[date] = None
     master_using_time_years: Optional[int] = None
@@ -87,6 +87,7 @@ class FirstLotRequest(FirstLotRequestBase):
         from_attributes = True
 class FirstLotHistoryBase(BaseModel):
     item_code: str
+    fabric_supplier: Optional[str] = None
     change_type: str
     old_date: Optional[date] = None
     new_date: Optional[date] = None

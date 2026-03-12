@@ -1,11 +1,18 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 import models, schemas
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 
-def check_first_lot_status(db: Session, item_code: str):
-    # Find matching first lot
-    first_lot = db.query(models.FirstLotMaster).filter(models.FirstLotMaster.item_code == item_code).first()
+def check_first_lot_status(db: Session, item_code: str, supplier_name: str = None):
+    # Find matching first lot by item_code AND supplier_name
+    query = db.query(models.FirstLotMaster).filter(models.FirstLotMaster.item_code == item_code)
+    
+    if supplier_name:
+        query = query.filter(models.FirstLotMaster.fabric_supplier == supplier_name)
+    
+    # Get the latest received_date if multiple exist
+    first_lot = query.order_by(models.FirstLotMaster.received_date.desc()).first()
     
     if not first_lot:
         return "Xin mới"
@@ -13,8 +20,8 @@ def check_first_lot_status(db: Session, item_code: str):
     if not first_lot.received_date:
         return "Xin mới"
     
-    # Check expiration (2 years or custom using_time_years)
-    expiration_date = first_lot.received_date + relativedelta(years=first_lot.using_time_years)
+    # Check expiration (default 2 years or custom using_time_years)
+    expiration_date = first_lot.received_date + relativedelta(years=first_lot.using_time_years or 2)
     if date.today() > expiration_date:
         return "Xin mới"
     
@@ -35,19 +42,42 @@ def create_first_lot_request(db: Session, request: schemas.FirstLotRequestCreate
 
 def get_first_lot_requests(db: Session, skip: int = 0, limit: int = 100, season: str = None, 
                            model_description: str = None, item_code: str = None, sample_types: list[str] = None):
+    # Subquery to get unique latest FirstLotMaster per (item_code, fabric_supplier)
+    # Using row_number() to handle cases where multiple records exist for same key
+    master_ranked = db.query(
+        models.FirstLotMaster,
+        func.row_number().over(
+            partition_by=(models.FirstLotMaster.item_code, models.FirstLotMaster.fabric_supplier),
+            order_by=models.FirstLotMaster.received_date.desc()
+        ).label("rn")
+    ).subquery()
+    
     query = db.query(
         models.FirstLotRequest,
-        models.FirstLotMaster.received_date.label("master_received_date"),
-        models.FirstLotMaster.using_time_years.label("master_using_time_years"),
-        models.FirstLotMaster.color_test_report_received_date.label("master_color_test_date"),
-        models.FirstLotMaster.mtsr_received_date.label("master_mtsr_date"),
-        models.FirstLotMaster.lot_info_status.label("master_lot_info_status"),
-        models.FirstLotMaster.lot_info_reason.label("master_lot_info_reason"),
-        models.FirstLotMaster.lot_quality_status.label("master_lot_quality_status"),
-        models.FirstLotMaster.lot_quality_reason.label("master_lot_quality_reason")
+        master_ranked.c.received_date.label("master_received_date"),
+        master_ranked.c.using_time_years.label("master_using_time_years"),
+        master_ranked.c.color_test_report_received_date.label("master_color_test_date"),
+        master_ranked.c.mtsr_received_date.label("master_mtsr_date"),
+        master_ranked.c.lot_info_status.label("master_lot_info_status"),
+        master_ranked.c.lot_info_reason.label("master_lot_info_reason"),
+        master_ranked.c.lot_quality_status.label("master_lot_quality_status"),
+        master_ranked.c.lot_quality_reason.label("master_lot_quality_reason"),
+        models.EmailLog.email_status.label("log_email_status"),
+        models.EmailLog.email_sent_at.label("log_email_sent_at"),
+        models.EmailLog.first_lot_received_status.label("log_received_status"),
+        models.EmailLog.resend_count.label("log_resend_count"),
+        models.SupplierEmail.supplier_name.label("supplier_lookup_name")
     ).outerjoin(
-        models.FirstLotMaster, 
-        models.FirstLotRequest.item_code == models.FirstLotMaster.item_code
+        models.SupplierEmail,
+        models.FirstLotRequest.cpt_supplier == models.SupplierEmail.cpt_supplier
+    ).outerjoin(
+        master_ranked, 
+        (models.FirstLotRequest.item_code == master_ranked.c.item_code) & 
+        (models.SupplierEmail.supplier_name == master_ranked.c.fabric_supplier) &
+        (master_ranked.c.rn == 1)
+    ).outerjoin(
+        models.EmailLog,
+        models.FirstLotRequest.ser_no == models.EmailLog.ser_no
     )
     
     if season:
@@ -73,7 +103,16 @@ def get_first_lot_requests(db: Session, skip: int = 0, limit: int = 100, season:
         req.master_lot_info_reason = row[6]
         req.master_lot_quality_status = row[7]
         req.master_lot_quality_reason = row[8]
-        # first_lot_received_status is already in req (models.FirstLotRequest)
+        
+        # New: supplier name for validation
+        req.supplier_lookup_name = row[13]
+        
+        # Recover status from EmailLog join
+        req.email_status = row[9]
+        req.email_sent_at = row[10]
+        req.first_lot_received_status = row[11]
+        req.resend_count = row[12] or 0
+        
         requests.append(req)
     
     return requests
@@ -84,9 +123,8 @@ def update_received_status(db: Session, request_id: int, status: str):
     db_request = db.query(models.FirstLotRequest).filter(models.FirstLotRequest.id == request_id).first()
     if not db_request:
         return None
-    db_request.first_lot_received_status = status
-    db.commit()
-    db.refresh(db_request)
+    # Note: Column removed from FirstLotRequest. We only return the object 
+    # so the caller (app.py) can get the ser_no and upsert to EmailLog.
     return db_request
 
 def get_first_lot_requests_count(db: Session, season: str = None, model_description: str = None, 
@@ -150,7 +188,11 @@ def get_first_lot_master_by_item(db: Session, item_code: str):
     return db.query(models.FirstLotMaster).filter(models.FirstLotMaster.item_code == item_code).first()
 
 def save_first_lot_master(db: Session, update_data: schemas.FirstLotDateUpdate):
-    master = db.query(models.FirstLotMaster).filter(models.FirstLotMaster.item_code == update_data.item_code).first()
+    # Lookup by BOTH item_code and fabric_supplier
+    master = db.query(models.FirstLotMaster).filter(
+        models.FirstLotMaster.item_code == update_data.item_code,
+        models.FirstLotMaster.fabric_supplier == update_data.fabric_supplier
+    ).first()
     
     # If not exists, create it
     if not master:
@@ -198,6 +240,7 @@ def save_first_lot_master(db: Session, update_data: schemas.FirstLotDateUpdate):
                     
                     history = models.FirstLotHistory(
                         item_code=master.item_code,
+                        fabric_supplier=master.fabric_supplier,
                         change_type=history_type,
                         old_date=old_val,
                         new_date=new_val
@@ -221,8 +264,27 @@ def save_first_lot_master(db: Session, update_data: schemas.FirstLotDateUpdate):
 def update_first_lot_master_dates(db: Session, update_data: schemas.FirstLotDateUpdate):
     return save_first_lot_master(db, update_data)
 
-def get_first_lot_history(db: Session, item_code: str):
-    return db.query(models.FirstLotHistory).filter(models.FirstLotHistory.item_code == item_code).order_by(models.FirstLotHistory.changed_at.desc()).all()
+def get_first_lot_master_by_item(db: Session, item_code: str, supplier_name: str = None):
+    query = db.query(models.FirstLotMaster).filter(models.FirstLotMaster.item_code == item_code)
+    if supplier_name:
+        query = query.filter(models.FirstLotMaster.fabric_supplier == supplier_name)
+    # Always return the latest entry if multiple exist
+    return query.order_by(models.FirstLotMaster.received_date.desc()).first()
+
+def update_received_status(db: Session, request_id: int, status: str):
+    req = db.query(models.FirstLotRequest).filter(models.FirstLotRequest.id == request_id).first()
+    if not req:
+        return None
+    req.first_lot_received_status = status
+    db.commit()
+    db.refresh(req)
+    return req
+
+def get_first_lot_history(db: Session, item_code: str, supplier_name: str = None):
+    query = db.query(models.FirstLotHistory).filter(models.FirstLotHistory.item_code == item_code)
+    if supplier_name:
+        query = query.filter(models.FirstLotHistory.fabric_supplier == supplier_name)
+    return query.order_by(models.FirstLotHistory.changed_at.desc()).all()
 
 def get_unique_filter_values(db: Session):
     seasons = [r[0] for r in db.query(models.FirstLotRequest.season).distinct().all() if r[0]]
@@ -300,3 +362,101 @@ def delete_staff_email(db: Session, staff_id: int):
     db.delete(staff)
     db.commit()
     return True
+
+# ── Supplier Performance Analytics ──────────────────────────────
+def get_supplier_performance(db: Session):
+    from sqlalchemy import text
+    from datetime import timedelta
+    from dateutil import parser
+    
+    query = text("""
+        SELECT r.cpt_supplier, s.supplier_name,
+               e.email_sent_at, e.updated_at, e.first_lot_received_status,
+               m.received_date as master_received_date, r.actual_delivery_date
+        FROM first_lot_requests r
+        JOIN email_log e ON r.ser_no = e.ser_no
+        LEFT JOIN supplier_email s ON r.cpt_supplier = s.cpt_supplier
+        LEFT JOIN first_lot_master m ON r.item_code = m.item_code AND r.cpt_supplier = m.fabric_supplier
+        WHERE r.sample_type ILIKE '%1st lot%' AND e.email_status = 'SENT'
+    """)
+    results = db.execute(query).fetchall()
+    
+    supplier_perf = {}
+    
+    for row in results:
+        supp_code = row[0]
+        supp_name = row[1] or supp_code
+        if not supp_code:
+            continue
+            
+        if supp_code not in supplier_perf:
+            supplier_perf[supp_code] = {"name": supp_name, "total": 0, "on_time": 0}
+            
+        supplier_perf[supp_code]["total"] += 1
+        
+        sent_at = row[2]
+        if not sent_at:
+            continue
+            
+        is_on_time = False
+        
+        # 1. Check master_received_date
+        if row[5]:
+            if (row[5] - sent_at.date()).days <= 7:
+                is_on_time = True
+        
+        # 2. Check email_log updated_at (if status is marked as received)
+        if not is_on_time and row[4] and row[3]:
+            # Assuming row[4] being NOT NULL means someone updated the status
+            if (row[3] - sent_at).days <= 7:
+                is_on_time = True
+                
+        # 3. Check actual_delivery_date
+        if not is_on_time and row[6]:
+            try:
+                actual_date = parser.parse(row[6]).date()
+                if (actual_date - sent_at.date()).days <= 7:
+                    is_on_time = True
+            except:
+                pass
+                
+        if is_on_time:
+            supplier_perf[supp_code]["on_time"] += 1
+            
+    final_results = []
+    for code, data in supplier_perf.items():
+        rate = (data["on_time"] / data["total"]) * 100 if data["total"] > 0 else 0
+        
+        status = "Standard"
+        status_color = "slate"
+        if rate >= 95:
+            status = "Elite"
+            status_color = "green"
+        elif rate >= 85:
+            status = "Good"
+            status_color = "brand"
+        elif rate >= 70:
+            status = "Under Review"
+            status_color = "amber"
+        else:
+            status = "Critical"
+            status_color = "red"
+            
+        # Calculate trend (dummy logic for now as we need historical snapshots for real trend)
+        trend = "+0.0%"
+        trend_class = "text-slate-400"
+        
+        final_results.append({
+            "code": code,
+            "name": data["name"],
+            "category": "Fabric/Textile", # Defaulting as this system is for fabrics
+            "total_deliveries": data["total"],
+            "on_time_deliveries": data["on_time"],
+            "on_time_rate": round(rate, 1),
+            "status": status,
+            "status_color": status_color,
+            "trend": trend,
+            "trend_class": trend_class
+        })
+        
+    return sorted(final_results, key=lambda x: x["on_time_rate"], reverse=True)

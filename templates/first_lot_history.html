@@ -119,9 +119,9 @@
             </a>
             {% endif %}
             <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
-                href="#">
+                href="/dashboard/">
                 <span class="material-symbols-outlined">analytics</span>
-                <span class="sidebar-text">Báo cáo</span>
+                <span class="sidebar-text">Dashboard</span>
             </a>
             <div class="pt-4 pb-2 px-4 section-label">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quản trị</p>
@@ -308,6 +308,9 @@
                                         class="px-6 py-5 border-b border-slate-200 bg-slate-50 sticky top-0 min-w-[200px]">
                                         Fabric Name</th>
                                     <th
+                                        class="px-6 py-5 border-b border-slate-200 bg-slate-50 sticky top-0 min-w-[150px]">
+                                        Nhà cung cấp</th>
+                                    <th
                                         class="px-6 py-5 border-b border-slate-200 bg-slate-50 sticky top-0 min-w-[140px] text-center">
                                         Status</th>
                                     <th
@@ -340,6 +343,9 @@
                                     <td class="px-6 py-5 font-bold text-slate-700 text-sm italic">#{{ item.item_code }}
                                     </td>
                                     <td class="px-6 py-5 text-xs text-slate-600 font-medium">{{ item.fabric_name or
+                                        '---' }}</td>
+                                    <td class="px-6 py-5 text-xs text-indigo-600 font-bold uppercase">{{
+                                        item.fabric_supplier or
                                         '---' }}</td>
                                     <td class="px-6 py-5 text-center">
                                         {% if item.is_valid %}
@@ -412,6 +418,7 @@
                                             data-info-reason="{{ item.lot_info_reason }}"
                                             data-quality-status="{{ item.lot_quality_status }}"
                                             data-quality-reason="{{ item.lot_quality_reason }}"
+                                            data-fabric-supplier="{{ item.fabric_supplier }}"
                                             class="w-10 h-10 flex items-center justify-center ml-auto bg-white border border-slate-200 text-accent rounded-xl hover:bg-accent hover:text-white hover:scale-110 active:scale-95 transition-all shadow-sm group/btn">
                                             <span class="material-symbols-outlined text-lg">edit</span>
                                         </button>
@@ -636,6 +643,13 @@
             document.getElementById('lot_quality_status').value = d.qualityStatus !== 'None' ? d.qualityStatus : 'OK';
             document.getElementById('lot_quality_reason').value = d.qualityReason !== 'None' ? d.qualityReason : '';
 
+            // Add fabric supplier to form
+            const formSupplier = document.createElement('input');
+            formSupplier.type = 'hidden';
+            formSupplier.name = 'fabric_supplier';
+            formSupplier.value = d.fabricSupplier || '';
+            document.getElementById('updateDateForm').appendChild(formSupplier);
+
             // Toggle visibility
             toggleReason('info');
             toggleReason('quality');
@@ -648,7 +662,7 @@
                 content.classList.add('scale-100');
             }, 10);
 
-            fetchHistory(itemCode);
+            fetchHistory(itemCode, d.fabricSupplier);
         }
 
         function toggleReason(type) {
@@ -672,12 +686,12 @@
             }, 200);
         }
 
-        async function fetchHistory(itemCode) {
+        async function fetchHistory(itemCode, supplierName) {
             const container = document.getElementById('historyTimeline');
             container.innerHTML = '<div class="flex items-center justify-center py-20"><span class="material-symbols-outlined animate-spin text-accent text-4xl">sync</span></div>';
 
             try {
-                const response = await fetch(`/api/master/history/${itemCode}`);
+                const response = await fetch(`/api/master/history/${itemCode}?supplier_name=${encodeURIComponent(supplierName || '')}`);
                 const history = await response.json();
 
                 if (history.length === 0) {

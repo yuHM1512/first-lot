@@ -243,6 +243,40 @@ async def sync_data():
         raise HTTPException(status_code=500, detail=result["message"])
     return result
 
+@app.get("/dashboard/", response_class=HTMLResponse)
+async def read_dashboard(request: Request, db: Session = Depends(get_db)):
+    user_code = get_user_from_cookie(request)
+    if not user_code:
+        return RedirectResponse(url=f"/login?next={request.url.path}")
+
+    if user_code == "admin":
+        user = models.StaffEmail(employee_code="admin", name="Administrator", role="admin", department="IT")
+    else:
+        user = db.query(models.StaffEmail).filter(models.StaffEmail.employee_code == user_code).first()
+        
+    performance_data = crud.get_supplier_performance(db)
+    
+    # Calculate Overview Metrics
+    total_suppliers = len(performance_data)
+    total_deliveries = sum(row["total_deliveries"] for row in performance_data)
+    total_on_time = sum(row["on_time_deliveries"] for row in performance_data)
+    
+    avg_on_time_rate = (total_on_time / total_deliveries * 100) if total_deliveries > 0 else 0
+    critical_suppliers = sum(1 for row in performance_data if row["status"] == "Critical")
+    
+    overview = {
+        "avg_on_time_rate": round(avg_on_time_rate, 1),
+        "total_suppliers": total_suppliers,
+        "critical_count": critical_suppliers
+    }
+        
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "user": user,
+        "performance_data": performance_data,
+        "overview": overview
+    })
+
 @app.get("/history/", response_class=HTMLResponse)
 async def read_history_page(request: Request, page: int = 1, limit: int = 100, item_code: str = None, fabric_name: str = None,
                             status: list[str] = Query(default=[]), db: Session = Depends(get_db)):
@@ -327,12 +361,12 @@ async def update_master_dates(update_data: schemas.FirstLotDateUpdate, db: Sessi
     return {"status": "success", "message": "Dates updated successfully"}
 
 @app.get("/api/master/get/{item_code}", response_model=Optional[schemas.FirstLotMaster])
-async def get_master_by_item(item_code: str, db: Session = Depends(get_db)):
-    return crud.get_first_lot_master_by_item(db, item_code)
+async def get_master_by_item(item_code: str, supplier_name: str = Query(None), db: Session = Depends(get_db)):
+    return crud.get_first_lot_master_by_item(db, item_code, supplier_name)
 
 @app.get("/api/master/history/{item_code}")
-async def get_item_history(item_code: str, db: Session = Depends(get_db)):
-    history = crud.get_first_lot_history(db, item_code)
+async def get_item_history(item_code: str, supplier_name: str = Query(None), db: Session = Depends(get_db)):
+    history = crud.get_first_lot_history(db, item_code, supplier_name)
     return history
 
 @app.put("/api/requests/{request_id}/received-status")
@@ -343,6 +377,33 @@ async def update_request_received_status(request_id: int, status_data: dict, db:
     updated = crud.update_received_status(db, request_id, status)
     if not updated:
         raise HTTPException(status_code=404, detail="Request not found")
+
+    # 🔒 Persist to email_log by ser_no (survives future data resyncs)
+    if updated.ser_no:
+        # Get clean supplier name if possible
+        supplier_name = None
+        if updated.cpt_supplier:
+            supp = db.query(models.SupplierEmail).filter_by(cpt_supplier=updated.cpt_supplier).first()
+            if supp:
+                supplier_name = supp.supplier_name
+
+        log = db.query(models.EmailLog).filter_by(ser_no=updated.ser_no).first()
+        if log:
+            log.first_lot_received_status = status
+            if updated.cpt_supplier:
+                log.fabric_supplier = updated.cpt_supplier
+                log.supplier_name = supplier_name
+        else:
+            db.add(models.EmailLog(
+                ser_no=updated.ser_no,
+                item=updated.item,
+                season=updated.season,
+                fabric_supplier=updated.cpt_supplier,
+                supplier_name=supplier_name,
+                first_lot_received_status=status
+            ))
+        db.commit()
+
     return {"status": "success", "message": "Received status updated"}
 
 # ── Supplier Email Routes ──────────────────────────────
