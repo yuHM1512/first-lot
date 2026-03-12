@@ -397,7 +397,8 @@
                                                     {% elif w >= 85 %}{% set color_class = 'bg-brand-500' %}
                                                     {% elif w >= 70 %}{% set color_class = 'bg-amber-500' %}
                                                     {% else %}{% set color_class = 'bg-red-500' %}{% endif %}
-                                                    <div class="{{ color_class }} h-full" style="width: {{ w }}%"></div>
+                                                    <div class="{{ color_class }} h-full" style="width: {{ w }}%;">
+                                                    </div>
                                                 </div>
                                                 <span class="text-sm font-bold text-slate-700">{{ supp.on_time_rate
                                                     }}%</span>
