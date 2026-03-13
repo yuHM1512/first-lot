@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: "class",
             theme: {
                 extend: {
                     colors: {
@@ -23,6 +24,7 @@
         rel="stylesheet">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="/static/figma-vibe.css" />
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -77,10 +79,33 @@
         #sidebar.collapsed .section-label {
             display: none;
         }
+    
+        /* Dark mode overrides */
+        html.dark body { background-color: #0f172a; color: #e2e8f0; }
+        html.dark .bg-white { background-color: #111827; }
+        html.dark .bg-white\/50 { background-color: rgba(17, 24, 39, 0.5); }
+        html.dark .bg-surface { background-color: #111827; }
+        html.dark .bg-slate-50 { background-color: #0f172a; }
+        html.dark .bg-slate-50\/50 { background-color: rgba(15, 23, 42, 0.5); }
+        html.dark .bg-slate-100 { background-color: #1f2937; }
+        html.dark .bg-slate-100\/50 { background-color: rgba(31, 41, 55, 0.5); }
+        html.dark .border-slate-200 { border-color: #334155; }
+        html.dark .border-slate-100 { border-color: #1f2937; }
+        html.dark .text-slate-900 { color: #e2e8f0; }
+        html.dark .text-slate-800 { color: #e2e8f0; }
+        html.dark .text-slate-700 { color: #cbd5e1; }
+        html.dark .text-slate-600 { color: #cbd5e1; }
+        html.dark .text-slate-500 { color: #94a3b8; }
+        html.dark .text-slate-400 { color: #94a3b8; }
+        html.dark .text-slate-300 { color: #94a3b8; }
+        html.dark .text-slate-200 { color: #64748b; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-track { background: #0b1220; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-color: #0b1220; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
 
-<body class="bg-background text-slate-900 antialiased h-screen overflow-hidden flex">
+<body class="bg-background text-slate-900 antialiased h-screen overflow-hidden flex figma-ui">
     <!-- Sidebar -->
     <aside id="sidebar" class="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex shrink-0 z-20">
         <div class="p-6 flex items-center gap-3">
@@ -134,7 +159,7 @@
         </nav>
 
         <div class="p-4 border-t border-slate-100 italic text-[10px] text-slate-400 text-center sidebar-text">
-            &copy; 2024 SwiftOrder Pro v2.0
+            M29 Digital Team
         </div>
     </aside>
 
@@ -150,6 +175,11 @@
                 <h2 class="text-lg font-bold text-slate-800">Quản lý Lịch sử 1st Lot</h2>
             </div>
             <div class="flex items-center gap-6">
+                <button id="themeToggle" onclick="toggleTheme()"
+                    class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                    <span class="theme-label hidden md:inline text-xs font-semibold">Night</span>
+                </button>
                 <div
                     class="h-10 w-10 rounded-xl border-2 border-slate-100 overflow-hidden bg-white shadow-sm flex items-center justify-center">
                     <span class="material-symbols-outlined text-slate-400">person</span>
@@ -797,6 +827,58 @@
             sidebar.classList.toggle('collapsed');
         }
     </script>
+    <script>
+        const THEME_KEY = "theme";
+
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            if (theme === "dark") {
+                root.classList.add("dark");
+            } else {
+                root.classList.remove("dark");
+            }
+
+            const btn = document.getElementById("themeToggle");
+            if (btn) {
+                const icon = btn.querySelector(".material-symbols-outlined");
+                const label = btn.querySelector(".theme-label");
+                if (theme === "dark") {
+                    if (icon) icon.innerText = "light_mode";
+                    if (label) label.textContent = "Light";
+                } else {
+                    if (icon) icon.innerText = "dark_mode";
+                    if (label) label.textContent = "Night";
+                }
+            }
+        }
+
+        function initTheme() {
+            const stored = localStorage.getItem(THEME_KEY);
+            if (stored) {
+                applyTheme(stored);
+                return;
+            }
+            const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+            applyTheme(prefersDark ? "dark" : "light");
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.contains("dark");
+            const next = isDark ? "light" : "dark";
+            localStorage.setItem(THEME_KEY, next);
+            applyTheme(next);
+        }
+
+        document.addEventListener("DOMContentLoaded", initTheme);
+    </script>
 </body>
 
 </html>
+
+
+
+
+
+
+
+

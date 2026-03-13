@@ -41,9 +41,12 @@ COLUMN_MAPPING = {
     'Address': 'address',
     'Status': 'status',
     'KT': 'kt',
-    'MD': 'md',
-    'Email': 'email_status'
+    'MD': 'md'
+    # 'Email' column is intentionally excluded — email_status lives in EmailLog table, not FirstLotRequest
 }
+
+# Fields that should NOT be passed to FirstLotRequest (they live in other tables)
+EXCLUDED_FROM_REQUEST = {'email_status', 'email_sent_at'}
 
 def process_and_save_data(df: pd.DataFrame, db: Session):
     # Ensure tables exist
@@ -58,13 +61,25 @@ def process_and_save_data(df: pd.DataFrame, db: Session):
     # Rename columns to db field names
     df = df.rename(columns=COLUMN_MAPPING)
     
+    # ONLY expected_arrival_date is a Date type in the model — all others are String
+    DATE_FIELDS = {'expected_arrival_date'}
+    from datetime import datetime
+    
     count = 0
     for _, row in df.iterrows():
-        # Get data as dictionary with None for NaNs
-        data = {k: (None if pd.isna(v) else str(v).strip()) for k, v in row.to_dict().items()}
+        # Convert NaN and empty/blank strings to None universally
+        raw = row.to_dict()
+        data = {}
+        for k, v in raw.items():
+            if isinstance(v, str):
+                data[k] = None if v.strip() == '' else v.strip()
+            elif pd.isna(v):
+                data[k] = None
+            else:
+                data[k] = str(v).strip()
         
-        # Only keep fields that exist in the COLUMN_MAPPING values (db fields)
-        db_data = {k: v for k, v in data.items() if k in COLUMN_MAPPING.values()}
+        # Only keep fields that exist in the COLUMN_MAPPING values (db fields) and are not excluded
+        db_data = {k: v for k, v in data.items() if k in COLUMN_MAPPING.values() and k not in EXCLUDED_FROM_REQUEST}
         
         if not db_data.get('item') and not db_data.get('ser_no'):
             continue
@@ -78,13 +93,20 @@ def process_and_save_data(df: pd.DataFrame, db: Session):
             if key in db_data and db_data[key] and db_data[key].endswith('.0'):
                 db_data[key] = db_data[key][:-2]
                 
-        # Parse Dates
-        from datetime import datetime
-        if db_data.get('expected_arrival_date'):
-            try:
-                db_data['expected_arrival_date'] = datetime.strptime(db_data['expected_arrival_date'], "%Y-%m-%d").date()
-            except ValueError:
-                db_data['expected_arrival_date'] = None
+        # Parse only actual Date columns — try multiple formats, fall back to None
+        for date_field in DATE_FIELDS:
+            val = db_data.get(date_field)
+            if not val:
+                db_data[date_field] = None
+                continue
+            parsed = None
+            for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"):
+                try:
+                    parsed = datetime.strptime(val, fmt).date()
+                    break
+                except (ValueError, TypeError):
+                    continue
+            db_data[date_field] = parsed  # None if nothing matched
 
         db_request = models.FirstLotRequest(**db_data)
         db.add(db_request)

@@ -9,6 +9,7 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script>
         tailwind.config = {
+            darkMode: "class",
             theme: {
                 extend: {
                     colors: {
@@ -35,6 +36,7 @@
         rel="stylesheet">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="/static/figma-vibe.css" />
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -94,10 +96,33 @@
         #sidebar.collapsed .section-label {
             display: none;
         }
+    
+        /* Dark mode overrides */
+        html.dark body { background-color: #0f172a; color: #e2e8f0; }
+        html.dark .bg-white { background-color: #111827; }
+        html.dark .bg-white\/50 { background-color: rgba(17, 24, 39, 0.5); }
+        html.dark .bg-surface { background-color: #111827; }
+        html.dark .bg-slate-50 { background-color: #0f172a; }
+        html.dark .bg-slate-50\/50 { background-color: rgba(15, 23, 42, 0.5); }
+        html.dark .bg-slate-100 { background-color: #1f2937; }
+        html.dark .bg-slate-100\/50 { background-color: rgba(31, 41, 55, 0.5); }
+        html.dark .border-slate-200 { border-color: #334155; }
+        html.dark .border-slate-100 { border-color: #1f2937; }
+        html.dark .text-slate-900 { color: #e2e8f0; }
+        html.dark .text-slate-800 { color: #e2e8f0; }
+        html.dark .text-slate-700 { color: #cbd5e1; }
+        html.dark .text-slate-600 { color: #cbd5e1; }
+        html.dark .text-slate-500 { color: #94a3b8; }
+        html.dark .text-slate-400 { color: #94a3b8; }
+        html.dark .text-slate-300 { color: #94a3b8; }
+        html.dark .text-slate-200 { color: #64748b; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-track { background: #0b1220; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-color: #0b1220; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
 
-<body class="bg-background text-slate-900 antialiased h-screen overflow-hidden flex">
+<body class="bg-background text-slate-900 antialiased h-screen overflow-hidden flex figma-ui">
     <!-- Sidebar -->
     <aside id="sidebar" class="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex shrink-0 z-20">
         <div class="p-6 flex items-center gap-3">
@@ -178,7 +203,12 @@
                     <span class="inline-block w-2 h-2 bg-success rounded-full animate-pulse"></span>
                     System Online
                 </div>
-                {% if user %}
+                <button id="themeToggle" onclick="toggleTheme()"
+                    class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                    <span class="theme-label hidden md:inline text-xs font-semibold">Night</span>
+                </button>
+            {% if user %}
                 <div class="flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
                     <div class="hidden md:block text-right">
                         <p class="text-sm font-semibold text-slate-700">{{ user.name }}</p>
@@ -397,8 +427,8 @@
                                                     {% elif w >= 85 %}{% set color_class = 'bg-brand-500' %}
                                                     {% elif w >= 70 %}{% set color_class = 'bg-amber-500' %}
                                                     {% else %}{% set color_class = 'bg-red-500' %}{% endif %}
-                                                    <div class="{{ color_class }} h-full" style="width: {{ w }}%;">
-                                                    </div>
+                                                    <div class="{{ color_class }} h-full" {% if w
+                                                        %}style="width: {{ w }}%;" {% endif %}></div>
                                                 </div>
                                                 <span class="text-sm font-bold text-slate-700">{{ supp.on_time_rate
                                                     }}%</span>
@@ -450,7 +480,7 @@
                 <footer class="bg-transparent border-t border-slate-200 py-4 mt-auto">
                     <div
                         class="mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400 text-sm">
-                        <p>© 2024 Supplier Performance Dashboard. Data refreshed every page load.</p>
+                        <p>Supplier Performance Dashboard. Data refreshed every page load.</p>
                     </div>
                 </footer>
                 <!-- END: Dashboard Footer -->
@@ -486,6 +516,59 @@
             }
         }
     </script>
+    <script>
+        const THEME_KEY = "theme";
+
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            if (theme === "dark") {
+                root.classList.add("dark");
+            } else {
+                root.classList.remove("dark");
+            }
+
+            const btn = document.getElementById("themeToggle");
+            if (btn) {
+                const icon = btn.querySelector(".material-symbols-outlined");
+                const label = btn.querySelector(".theme-label");
+                if (theme === "dark") {
+                    if (icon) icon.innerText = "light_mode";
+                    if (label) label.textContent = "Light";
+                } else {
+                    if (icon) icon.innerText = "dark_mode";
+                    if (label) label.textContent = "Night";
+                }
+            }
+        }
+
+        function initTheme() {
+            const stored = localStorage.getItem(THEME_KEY);
+            if (stored) {
+                applyTheme(stored);
+                return;
+            }
+            const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+            applyTheme(prefersDark ? "dark" : "light");
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.contains("dark");
+            const next = isDark ? "light" : "dark";
+            localStorage.setItem(THEME_KEY, next);
+            applyTheme(next);
+        }
+
+        document.addEventListener("DOMContentLoaded", initTheme);
+    </script>
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
