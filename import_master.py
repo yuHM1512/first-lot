@@ -1,9 +1,11 @@
 import pandas as pd
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 import models
 from database import SessionLocal, engine
 import os
 import datetime
+import argparse
 
 # Mapping Excel columns to Database fields for Master Data
 # A: Fabric name, B: Model code, C: Fabric supplier, D: Usable Width, E: Unit, 
@@ -76,7 +78,7 @@ def import_master_excel(file_path: str):
                     try:
                         data[db_field] = int(val)
                     except:
-                        data[db_field] = 2 # Default
+                        data[db_field] = 3 # Default
                 else:
                     data[db_field] = str(val)
 
@@ -102,6 +104,37 @@ def import_master_excel(file_path: str):
     finally:
         db.close()
 
+def reset_master_from_excel(file_path: str, clear_history: bool = False):
+    if not os.path.exists(file_path):
+        print(f"Error: File {file_path} not found.")
+        return
+
+    db = SessionLocal()
+    try:
+        models.Base.metadata.create_all(bind=engine)
+        db.execute(text("DELETE FROM first_lot_master"))
+        if clear_history:
+            db.execute(text("DELETE FROM first_lot_history"))
+        db.commit()
+        print("Cleared first_lot_master" + (" and first_lot_history" if clear_history else "") + ".")
+    except Exception as e:
+        db.rollback()
+        print(f"Error clearing tables: {e}")
+        db.close()
+        return
+    finally:
+        db.close()
+
+    import_master_excel(file_path)
+
 if __name__ == "__main__":
-    excel_file = "first_lot_store.xlsx"
-    import_master_excel(excel_file)
+    parser = argparse.ArgumentParser(description="Import or reset first_lot_master from Excel.")
+    parser.add_argument("--file", default="first_lot_store.xlsx", help="Path to Excel file")
+    parser.add_argument("--reset", action="store_true", help="Delete all rows in first_lot_master before import")
+    parser.add_argument("--clear-history", action="store_true", help="Also delete all rows in first_lot_history")
+    args = parser.parse_args()
+
+    if args.reset:
+        reset_master_from_excel(args.file, clear_history=args.clear_history)
+    else:
+        import_master_excel(args.file)

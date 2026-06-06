@@ -13,7 +13,7 @@ class FirstLotMasterBase(BaseModel):
     description: Optional[str] = None
     provider: Optional[str] = None
     received_date: Optional[date] = None
-    using_time_years: int = 2
+    using_time_years: int = 3
     color_test_report_received_date: Optional[date] = None
     mtsr_received_date: Optional[date] = None
     
@@ -153,3 +153,25 @@ class StaffEmail(StaffEmailBase):
 
     class Config:
         from_attributes = True
+
+class ScheduleEmailSettings(BaseModel):
+    recipient_names: list[str] = []
+    subject: str
+    body: str
+    send_day: int
+    send_time: str
+    is_active: bool = True
+
+class ScheduleEmailSendNow(BaseModel):
+    recipient_names: list[str] = []
+    subject: Optional[str] = None
+    body: Optional[str] = None
+
+class TimeoutEmailRowRequest(BaseModel):
+    ser_no: str
+
+class TimeoutEmailRowsRequest(BaseModel):
+    ser_nos: list[str]
+
+class MissingFirstLotRowsRequest(BaseModel):
+    ser_nos: list[str]

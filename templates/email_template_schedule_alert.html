@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body style="margin: 0; padding: 0; background-color: #f4f4f4;">
+    <div
+        style="font-family: 'Times New Roman', serif; font-size: 14px; color: black; max-width: 960px; margin: 0 auto; background: white; padding: 30px;">
+
+        {{ body_text | e | replace('\n', '<br>') | safe }}
+        <br><br>
+
+        <h4 style="margin-top: 10px; margin-bottom: 6px;">Danh sách vải sắp về ({{ date_range_str }})</h4>
+        <table border="1" cellpadding="5" cellspacing="0"
+            style="border-collapse: collapse; width: 100%; font-size: 11px;">
+            <tr style="background-color: #002060; color: white; font-weight: bold; text-align: center;">
+                <th style="padding: 8px;">Mùa</th>
+                <th style="padding: 8px;">Iman</th>
+                <th style="padding: 8px;">Loại vải</th>
+                <th style="padding: 8px;">Model Code</th>
+                <th style="padding: 8px;">Item</th>
+                <th style="padding: 8px;">Nhà cung ứng</th>
+                <th style="padding: 8px;">Ngày đến (ETD)</th>
+                <th style="padding: 8px;">Hiệu lực 1st lot</th>
+            </tr>
+            {% for row in detail_rows %}
+            <tr style="text-align: center;">
+                <td style="padding: 5px;">{{ row.season or '' }}</td>
+                <td style="padding: 5px;">{{ row.iman or '' }}</td>
+                <td style="padding: 5px; text-align: left;">{{ row.cpt_description or '' }}</td>
+                <td style="padding: 5px;">{{ row.model_code or '' }}</td>
+                <td style="padding: 5px;">{{ row.item_code or '' }}</td>
+                <td style="padding: 5px;">{{ row.supplier_name or '' }}</td>
+                <td style="padding: 5px;">{{ row.etd_str or '' }}</td>
+                <td style="padding: 5px;">{{ row.status or '' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <br>
+        <em>This email is sent automatically from the system. Please do not reply directly to this email.</em><br><br>
+
+        <strong>Thank you!</strong><br><br>
+
+        <!-- Company Footer -->
+        <div style="font-size: 12px; color: #000ba4; margin-top: 10px; font-family: 'Times New Roman', serif;">
+            <p>
+                <strong>MARCH 29 TEXTILE - GARMENT JOINT STOCK COMPANY</strong><br>
+                <strong>Email:</strong> hachiba@hachibavn.com<br>
+                <strong>Phone:</strong> 0236 3756 999<br>
+                <strong>Website:</strong> <a href="http://hachiba.com.vn" target="_blank"
+                    style="color: #007BFF; text-decoration: none;">hachiba.com.vn</a><br>
+                <strong>Address:</strong> 60 Me Nhu, Da Nang
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

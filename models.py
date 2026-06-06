@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, Float, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, Float, DateTime, Text, ForeignKey, Boolean
 from sqlalchemy.sql import func
 from database import Base
 
@@ -16,7 +16,7 @@ class FirstLotMaster(Base):
     description = Column(Text)
     provider = Column(String)
     received_date = Column(Date)
-    using_time_years = Column(Integer, default=2)
+    using_time_years = Column(Integer, default=3)
     color_test_report_received_date = Column(Date)
     mtsr_received_date = Column(Date)
     
@@ -25,6 +25,8 @@ class FirstLotMaster(Base):
     lot_info_reason = Column(Text)
     lot_quality_status = Column(String, default="OK") # "OK" or "NOK"
     lot_quality_reason = Column(Text)
+    quality_checked_at = Column(DateTime(timezone=True))
+    quality_checked_by = Column(String)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -63,6 +65,7 @@ class FirstLotRequest(Base):
     supplier_process = Column(String)
     address = Column(Text)
     status = Column(String)  # This will store "OK" or "Xin mới"
+    first_lot_received_status = Column(String)
     kt = Column(String)
     md = Column(String)
     
@@ -109,6 +112,71 @@ class EmailLog(Base):
     supplier_name = Column(String)           # Human-friendly name from supplier_email table
     email_status = Column(String)            # 'SENT'
     email_sent_at = Column(DateTime(timezone=True))
-    first_lot_received_status = Column(String)
     resend_count = Column(Integer, default=0)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+class ScheduleFabric(Base):
+    __tablename__ = "schedule_fabric"
+
+    id = Column(Integer, primary_key=True, index=True)
+    season = Column(String)
+    item_code = Column(String, index=True)
+    supplier_name = Column(String)
+    etd = Column(Date)
+    iman = Column(String)
+    model_code = Column(String)
+    cpt_description = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class FabricSupplierMatch(Base):
+    __tablename__ = "fabric_supplier_match"
+
+    id = Column(Integer, primary_key=True, index=True)
+    schedule_name = Column(String, unique=True, index=True, nullable=False)
+    standard_name = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class Rank2Threshold(Base):
+    __tablename__ = "rank2_thresholds"
+
+    id = Column(Integer, primary_key=True, index=True)
+    rank = Column(String, nullable=False)
+    from_value = Column(Float, nullable=False)
+    to_value = Column(Float, nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+class Rank2YearMeta(Base):
+    __tablename__ = "rank2_year_meta"
+
+    year = Column(String, primary_key=True)
+    criteria_columns = Column(Text)
+    last_synced_at = Column(DateTime(timezone=True))
+    last_synced_by = Column(String)
+
+class Rank2SupplierScore(Base):
+    __tablename__ = "rank2_supplier_scores"
+
+    id = Column(Integer, primary_key=True, index=True)
+    year = Column(String, index=True, nullable=False)
+    customer = Column(String, index=True, nullable=False)
+    supplier_name = Column(String, nullable=False)
+    metrics_json = Column(Text)
+    score = Column(Float)
+    rank = Column(String)
+    source_score = Column(Float)
+    source_rank = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class ScheduleEmailSetting(Base):
+    __tablename__ = "schedule_email_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    recipient_names = Column(Text)  # comma-separated staff names
+    subject = Column(Text)
+    body = Column(Text)
+    send_day = Column(Integer)  # 0=Mon ... 6=Sun
+    send_time = Column(String)  # "HH:MM"
+    is_active = Column(Boolean, default=True)
+    last_sent_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

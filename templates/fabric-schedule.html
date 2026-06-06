@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Check lịch vải - 1st Lot Management</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="/static/figma-vibe.css" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6",
+                        "accent": "#0ea5e9",
+                        "surface": "#ffffff",
+                        "background": "#f8fafc",
+                    },
+                    fontFamily: {
+                        "sans": ["Inter", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style type="text/tailwindcss">
+        .custom-scrollbar::-webkit-scrollbar { height: 10px; width: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20; }
+        
+        #sidebar { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        #sidebar.collapsed { width: 80px; }
+        #sidebar.collapsed .sidebar-text { display: none; }
+        #sidebar.collapsed .sidebar-header-text { display: none; }
+        #sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+        #sidebar.collapsed .section-label { display: none; }
+
+        html.dark body { background-color: #0f172a; color: #e2e8f0; }
+        html.dark .bg-white { background-color: #111827; }
+        html.dark .bg-white\/50 { background-color: rgba(17, 24, 39, 0.5); }
+        html.dark .bg-surface { background-color: #111827; }
+        html.dark .bg-slate-50 { background-color: #0f172a; }
+        html.dark .bg-slate-50\/50 { background-color: rgba(15, 23, 42, 0.5); }
+        html.dark .bg-slate-100 { background-color: #1f2937; }
+        html.dark .bg-slate-100\/50 { background-color: rgba(31, 41, 55, 0.5); }
+        html.dark .border-slate-200 { border-color: #334155; }
+        html.dark .border-slate-100 { border-color: #1f2937; }
+        html.dark .text-slate-900 { color: #e2e8f0; }
+        html.dark .text-slate-800 { color: #e2e8f0; }
+        html.dark .text-slate-700 { color: #cbd5e1; }
+        html.dark .text-slate-600 { color: #cbd5e1; }
+        html.dark .text-slate-500 { color: #94a3b8; }
+        html.dark .text-slate-400 { color: #94a3b8; }
+        html.dark .text-slate-300 { color: #94a3b8; }
+        html.dark .text-slate-200 { color: #64748b; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-track { background: #0b1220; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-color: #0b1220; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-row overflow-hidden font-sans bg-background text-slate-900 figma-ui">
+    <!-- Left Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex shrink-0 z-20">
+        <div class="p-6 flex items-center gap-3">
+            <div
+                class="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white shadow-lg shadow-accent/20 shrink-0">
+                <span class="material-symbols-outlined !text-2xl">app_registration</span>
+            </div>
+            <div class="sidebar-header-text">
+                <h1 class="text-sm font-bold tracking-tight text-slate-800">1st Lot Tracker</h1>
+                <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">M29 Digital Team</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/">
+                <span class="material-symbols-outlined">home</span>
+                <span class="sidebar-text">Trang chủ</span>
+            </a>
+            <div class="h-px bg-slate-100 mx-4 my-2"></div>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/first-lot/">
+                <span class="material-symbols-outlined">inventory_2</span>
+                <span class="sidebar-text">Thông tin vải</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 bg-accent text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-accent/10"
+                href="/fabric-schedule/">
+                <span class="material-symbols-outlined">event</span>
+                <span class="sidebar-text">Check lịch vải</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/history/">
+                <span class="material-symbols-outlined">history</span>
+                <span class="sidebar-text">1st Lot History</span>
+            </a>
+            {% if user.role in ['admin', 'MD'] %}
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/emails/">
+                <span class="material-symbols-outlined">mail</span>
+                <span class="sidebar-text">Email List</span>
+            </a>
+            {% endif %}
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/dashboard/">
+                <span class="material-symbols-outlined">analytics</span>
+                <span class="sidebar-text">Dashboard</span>
+            </a>
+            <div class="pt-4 pb-2 px-4 section-label">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quản trị</p>
+            </div>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="sidebar-text">Cài đặt</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/guide/">
+                <span class="material-symbols-outlined">menu_book</span>
+                <span class="sidebar-text">Hướng dẫn</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-100 italic text-[10px] text-slate-400 text-center sidebar-text">
+            M29 Digital Team
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-50/50 h-screen overflow-hidden">
+        <!-- Header -->
+        <header class="bg-surface border-b border-slate-200 px-8 py-4 flex items-center justify-between gap-4 shrink-0">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()"
+                    class="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <img src="/static/Logo.png" alt="Logo" class="h-8 w-auto object-contain">
+                <h2 class="text-lg font-bold text-slate-800">Check lịch vải</h2>
+            </div>
+            <div class="flex items-center gap-6">
+                <button id="themeToggle" onclick="toggleTheme()"
+                    class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                    <span class="theme-label hidden md:inline text-xs font-semibold">Night</span>
+                </button>
+                {% if user %}
+                <div class="hidden md:flex items-center gap-2 text-sm text-slate-500">
+                    <span class="font-semibold text-slate-700">{{ user.name }}</span>
+                    <span class="text-slate-400">|</span>
+                    <span class="text-slate-500">{{ user.role }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-auto custom-scrollbar p-6 lg:p-8 space-y-6">
+            <div class="max-w-[1700px] mx-auto w-full space-y-6">
+                <section class="space-y-4">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Tình trạng 1st lot của vải chuẩn bị đưa vào sản xuất</h3>
+                                <p class="text-slate-500 text-sm">Mặc định hiển thị ETD từ hôm nay đến 7 ngày tới.</p>
+                            </div>
+                            <a href="/email-setup/" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-bold shadow-sm hover:bg-slate-50 hover:border-accent hover:text-accent transition-all group shrink-0">
+                                <span class="material-symbols-outlined !text-xl text-accent group-hover:scale-110 transition-transform">mail</span>
+                                Set up email tự động
+                            </a>
+                        </div>
+                    <form id="filterForm" class="flex flex-col xl:flex-row gap-4 w-full" method="get" action="/fabric-schedule/" onsubmit="return false;">
+                        <input type="hidden" name="page" value="1">
+                        <div class="flex flex-wrap items-end gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm shrink-0">
+                            <div class="flex flex-col">
+                                <label class="text-xs font-semibold text-slate-500 mb-1">From</label>
+                                <input type="date" name="from_date" value="{{ from_date }}" onchange="debounceSubmit()"
+                                    class="w-[140px] rounded-lg border-slate-200 text-sm focus:ring-accent focus:border-accent" />
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="text-xs font-semibold text-slate-500 mb-1">To</label>
+                                <input type="date" name="to_date" value="{{ to_date }}" onchange="debounceSubmit()"
+                                    class="w-[140px] rounded-lg border-slate-200 text-sm focus:ring-accent focus:border-accent" />
+                            </div>
+                        </div>
+                        <div id="filter-datalists-container" class="flex flex-1 flex-wrap lg:flex-nowrap items-end gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm min-w-0">
+                            <div class="flex flex-col flex-1 min-w-[100px]">
+                                <label class="text-xs font-semibold text-slate-500 mb-1">Mùa</label>
+                                <input type="text" name="season" value="{{ filters.season }}" list="season-list" oninput="debounceSubmit()" autocomplete="off"
+                                    class="w-full rounded-lg border-slate-200 text-sm focus:ring-accent focus:border-accent" />
+                                <datalist id="season-list">
+                                    {% for op in filter_options.seasons %}
+                                    <option value="{{ op }}"></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                            <div class="flex flex-col flex-1 min-w-[100px]">
+                                <label class="text-xs font-semibold text-slate-500 mb-1">Iman</label>
+                                <input type="text" name="iman" value="{{ filters.iman }}" list="iman-list" oninput="debounceSubmit()" autocomplete="off"
+                                    class="w-full rounded-lg border-slate-200 text-sm focus:ring-accent focus:border-accent" />
+                                <datalist id="iman-list">
+                                    {% for op in filter_options.imans %}
+                                    <option value="{{ op }}"></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                            <div class="flex flex-col flex-1 min-w-[100px]">
+                                <label class="text-xs font-semibold text-slate-500 mb-1">Loại vải</label>
+                                <input type="text" name="cpt_description" value="{{ filters.cpt_description }}" list="cpt-list" oninput="debounceSubmit()" autocomplete="off"
+                                    class="w-full rounded-lg border-slate-200 text-sm focus:ring-accent focus:border-accent" />
+                                <datalist id="cpt-list">
+                                    {% for op in filter_options.cpt_descriptions %}
+                                    <option value="{{ op }}"></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                            <div class="flex flex-col flex-1 min-w-[100px]">
+                                <label class="text-xs font-semibold text-slate-500 mb-1">Nhà cung ứng</label>
+                                <input type="text" name="supplier_name" value="{{ filters.supplier_name }}" list="supplier-list" oninput="debounceSubmit()" autocomplete="off"
+                                    class="w-full rounded-lg border-slate-200 text-sm focus:ring-accent focus:border-accent" />
+                                <datalist id="supplier-list">
+                                    {% for op in filter_options.supplier_names %}
+                                    <option value="{{ op }}"></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                            <div class="flex flex-col flex-1 min-w-[140px]">
+                                <label class="text-xs font-semibold text-slate-500 mb-1">Hiệu lực 1st lot</label>
+                                <select name="validity_status" multiple size="1" onchange="debounceSubmit()"
+                                    class="w-full rounded-lg border-slate-200 text-sm focus:ring-accent focus:border-accent h-10">
+                                    {% for op in filter_options.validity_statuses %}
+                                    <option value="{{ op }}" {% if op in filters.validity_status %}selected{% endif %}>
+                                        {{ op }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button id="syncScheduleBtn" type="button"
+                                onclick="syncScheduleFabric()"
+                                class="h-10 px-4 rounded-lg bg-accent text-white text-sm font-semibold hover:brightness-110 transition-colors shrink-0 whitespace-nowrap">
+                                Đồng bộ
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+
+                <section class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="overflow-auto custom-scrollbar">
+                        <table class="min-w-[1200px] w-full text-left border-collapse text-xs">
+                            <thead class="bg-slate-50/70 text-slate-500 uppercase tracking-wider font-semibold">
+                                <tr>
+                                    <th class="px-5 py-4">Mùa</th>
+                                    <th class="px-5 py-4">Iman</th>
+                                    <th class="px-5 py-4 w-[210px]">Loại vải</th>
+                                    <th class="px-5 py-4">Model Code</th>
+                                    <th class="px-5 py-4">Item</th>
+                                    <th class="px-5 py-4">Nhà cung ứng</th>
+                                    <th class="px-5 py-4">Ngày đến (ETD)</th>
+                                    <th class="px-5 py-4">Hiệu lực 1st lot</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-tbody" class="divide-y divide-slate-100">
+                                {% for row in rows %}
+                                <tr class="hover:bg-slate-50/60 transition-colors">
+                                    <td class="px-5 py-3 text-slate-700">{{ row.season or '' }}</td>
+                                    <td class="px-5 py-3 text-slate-700">{{ row.iman or '' }}</td>
+                                    <td class="px-5 py-3 text-slate-700">
+                                        <div class="max-w-[210px] truncate" title="{{ row.cpt_description or '' }}">
+                                            {{ row.cpt_description or '' }}
+                                        </div>
+                                    </td>
+                                    <td class="px-5 py-3 text-slate-700">{{ row.model_code or '' }}</td>
+                                    <td class="px-5 py-3 text-slate-700">{{ row.item_code or '' }}</td>
+                                    <td class="px-5 py-3 text-slate-700">{{ row.supplier_name or '' }}</td>
+                                    <td class="px-5 py-3 text-slate-700">{{ row.etd_str }}</td>
+                                    <td class="px-5 py-4">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-{{ row.status_color }}-100 text-{{ row.status_color }}-700">
+                                            {{ row.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="px-6 py-10 text-center text-slate-500">
+                                        Không có dữ liệu theo khoảng ETD đã chọn.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="schedule-pagination" class="flex items-center justify-between px-5 py-4 border-t border-slate-100 text-xs text-slate-500">
+                        <div>
+                            Trang {{ pagination.page }} / {{ pagination.total_pages }} · Tổng {{ pagination.total_count }}
+                        </div>
+                        <div class="flex items-center gap-1">
+                            {% if pagination.page > 1 %}
+                            <a class="h-8 w-8 flex items-center justify-center border border-slate-200 rounded hover:bg-slate-50"
+                                href="/fabric-schedule/?from_date={{ from_date }}&to_date={{ to_date }}&season={{ filters.season }}&iman={{ filters.iman }}&cpt_description={{ filters.cpt_description }}&supplier_name={{ filters.supplier_name }}{% for v in filters.validity_status %}&validity_status={{ v }}{% endfor %}&page=1&limit={{ pagination.limit }}"
+                                title="Trang đầu">
+                                <span class="material-symbols-outlined text-lg">first_page</span>
+                            </a>
+                            <a class="h-8 w-8 flex items-center justify-center border border-slate-200 rounded hover:bg-slate-50"
+                                href="/fabric-schedule/?from_date={{ from_date }}&to_date={{ to_date }}&season={{ filters.season }}&iman={{ filters.iman }}&cpt_description={{ filters.cpt_description }}&supplier_name={{ filters.supplier_name }}{% for v in filters.validity_status %}&validity_status={{ v }}{% endfor %}&page={{ pagination.page - 1 }}&limit={{ pagination.limit }}"
+                                title="Trang trước">
+                                <span class="material-symbols-outlined text-lg">chevron_left</span>
+                            </a>
+                            {% else %}
+                            <span class="h-8 w-8 flex items-center justify-center border border-slate-200 rounded text-slate-300">
+                                <span class="material-symbols-outlined text-lg">first_page</span>
+                            </span>
+                            <span class="h-8 w-8 flex items-center justify-center border border-slate-200 rounded text-slate-300">
+                                <span class="material-symbols-outlined text-lg">chevron_left</span>
+                            </span>
+                            {% endif %}
+                            {% if pagination.has_next %}
+                            <a class="h-8 w-8 flex items-center justify-center border border-slate-200 rounded hover:bg-slate-50"
+                                href="/fabric-schedule/?from_date={{ from_date }}&to_date={{ to_date }}&season={{ filters.season }}&iman={{ filters.iman }}&cpt_description={{ filters.cpt_description }}&supplier_name={{ filters.supplier_name }}{% for v in filters.validity_status %}&validity_status={{ v }}{% endfor %}&page={{ pagination.page + 1 }}&limit={{ pagination.limit }}"
+                                title="Trang sau">
+                                <span class="material-symbols-outlined text-lg">chevron_right</span>
+                            </a>
+                            <a class="h-8 w-8 flex items-center justify-center border border-slate-200 rounded hover:bg-slate-50"
+                                href="/fabric-schedule/?from_date={{ from_date }}&to_date={{ to_date }}&season={{ filters.season }}&iman={{ filters.iman }}&cpt_description={{ filters.cpt_description }}&supplier_name={{ filters.supplier_name }}{% for v in filters.validity_status %}&validity_status={{ v }}{% endfor %}&page={{ pagination.total_pages }}&limit={{ pagination.limit }}"
+                                title="Trang cuối">
+                                <span class="material-symbols-outlined text-lg">last_page</span>
+                            </a>
+                            {% else %}
+                            <span class="h-8 w-8 flex items-center justify-center border border-slate-200 rounded text-slate-300">
+                                <span class="material-symbols-outlined text-lg">chevron_right</span>
+                            </span>
+                            <span class="h-8 w-8 flex items-center justify-center border border-slate-200 rounded text-slate-300">
+                                <span class="material-symbols-outlined text-lg">last_page</span>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let debounceTimer;
+        function debounceSubmit() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                applyFilters();
+            }, 500);
+        }
+
+        async function applyFilters() {
+            const form = document.getElementById("filterForm");
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            const targetUrl = "/fabric-schedule/?" + params.toString();
+            
+            // update URL silently
+            window.history.replaceState({}, '', targetUrl);
+            
+            try {
+                const res = await fetch(targetUrl);
+                const text = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, "text/html");
+                
+                const tableBody = doc.getElementById("schedule-tbody");
+                const pagination = doc.getElementById("schedule-pagination");
+                
+                if (tableBody) document.getElementById("schedule-tbody").innerHTML = tableBody.innerHTML;
+                if (pagination) document.getElementById("schedule-pagination").innerHTML = pagination.innerHTML;
+                
+                // update datalists without breaking focus
+                const datalists = ["season-list", "iman-list", "cpt-list", "supplier-list"];
+                for (let dl of datalists) {
+                    const newDl = doc.getElementById(dl);
+                    if (newDl) document.getElementById(dl).innerHTML = newDl.innerHTML;
+                }
+
+                const newValidity = doc.querySelector('select[name="validity_status"]');
+                const currentValidity = document.querySelector('select[name="validity_status"]');
+                if (newValidity && currentValidity) {
+                    currentValidity.innerHTML = newValidity.innerHTML;
+                }
+            } catch (err) {
+                console.error("Lọc lỗi:", err);
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        async function syncScheduleFabric() {
+            const btn = document.getElementById("syncScheduleBtn");
+            if (!btn) return;
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Đang đồng bộ...";
+            try {
+                const res = await fetch("/api/schedule-fabric/sync", { method: "POST" });
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || data.message || "Sync failed");
+                }
+                location.reload();
+            } catch (err) {
+                alert("Đồng bộ thất bại: " + err.message);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+
+        const THEME_KEY = "theme";
+
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            if (theme === "dark") {
+                root.classList.add("dark");
+            } else {
+                root.classList.remove("dark");
+            }
+
+            const btn = document.getElementById("themeToggle");
+            if (btn) {
+                const icon = btn.querySelector(".material-symbols-outlined");
+                const label = btn.querySelector(".theme-label");
+                if (theme === "dark") {
+                    if (icon) icon.innerText = "light_mode";
+                    if (label) label.textContent = "Light";
+                } else {
+                    if (icon) icon.innerText = "dark_mode";
+                    if (label) label.textContent = "Night";
+                }
+            }
+        }
+
+        function initTheme() {
+            const stored = localStorage.getItem(THEME_KEY);
+            if (stored) {
+                applyTheme(stored);
+                return;
+            }
+            const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+            applyTheme(prefersDark ? "dark" : "light");
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.contains("dark");
+            const next = isDark ? "light" : "dark";
+            localStorage.setItem(THEME_KEY, next);
+            applyTheme(next);
+        }
+
+        document.addEventListener("DOMContentLoaded", initTheme);
+    </script>
+</body>
+
+</html>

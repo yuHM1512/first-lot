@@ -131,6 +131,11 @@
                 <span class="material-symbols-outlined">inventory_2</span>
                 <span class="sidebar-text">Thông tin vải</span>
             </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/fabric-schedule/">
+                <span class="material-symbols-outlined">event</span>
+                <span class="sidebar-text">Check lịch vải</span>
+            </a>
             <a class="nav-item flex items-center gap-3 px-4 py-3 bg-accent text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-accent/10"
                 href="/history/">
                 <span class="material-symbols-outlined">history</span>
@@ -155,6 +160,11 @@
                 href="#">
                 <span class="material-symbols-outlined">settings</span>
                 <span class="sidebar-text">Cài đặt</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/guide/">
+                <span class="material-symbols-outlined">menu_book</span>
+                <span class="sidebar-text">Hướng dẫn</span>
             </a>
         </nav>
 
@@ -254,7 +264,7 @@
                             <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Bộ lọc nhanh</h4>
                         </div>
 
-                        <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div class="relative group/status z-30">
                                 <div tabindex="0"
                                     class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-semibold cursor-pointer flex justify-between items-center group-focus-within/status:ring-4 group-focus-within/status:ring-accent/10 group-focus-within/status:border-accent transition-all text-slate-500 shadow-sm outline-none">
@@ -304,9 +314,22 @@
                                     placeholder="Tìm theo Fabric Name..."
                                     class="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-5 py-3.5 text-sm focus:ring-4 focus:ring-accent/10 focus:border-accent outline-none transition-all font-semibold shadow-sm">
                             </div>
+                            <div class="relative group">
+                                <span
+                                    class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg group-focus-within:text-accent transition-colors">business</span>
+                                <select id="filter_supplier_name"
+                                    class="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-5 py-3.5 text-sm focus:ring-4 focus:ring-accent/10 focus:border-accent outline-none transition-all font-semibold shadow-sm">
+                                    <option value="">Nhà cung ứng...</option>
+                                    {% if supplier_names %}
+                                    {% for s in supplier_names %}
+                                    <option value="{{ s }}" {% if filters.supplier_name == s %}selected{% endif %}>{{ s }}</option>
+                                    {% endfor %}
+                                    {% endif %}
+                                </select>
+                            </div>
                         </div>
 
-                        {% if filters.item_code or filters.fabric_name or filters.status %}
+                        {% if filters.item_code or filters.fabric_name or filters.supplier_name or filters.status %}
                         <button onclick="window.location.href='/history/'"
                             class="flex items-center gap-1.5 px-5 py-3.5 bg-red-50 text-red-600 rounded-2xl text-sm font-bold hover:bg-red-100 hover:scale-105 active:scale-95 transition-all outline-none border border-red-100 shrink-0 shadow-sm">
                             <span class="material-symbols-outlined text-lg">filter_alt_off</span>
@@ -800,6 +823,7 @@
         const handleFilter = debounce(() => {
             const itemCode = document.getElementById('filter_item_code').value;
             const fabricName = document.getElementById('filter_fabric_name').value;
+            const supplierName = document.getElementById('filter_supplier_name').value;
 
             const statusCheckboxes = document.querySelectorAll('.status-checkbox:checked');
             const statuses = Array.from(statusCheckboxes).map(cb => cb.value);
@@ -812,6 +836,9 @@
             if (fabricName) url.searchParams.set('fabric_name', fabricName);
             else url.searchParams.delete('fabric_name');
 
+            if (supplierName) url.searchParams.set('supplier_name', supplierName);
+            else url.searchParams.delete('supplier_name');
+
             url.searchParams.delete('status');
             statuses.forEach(s => url.searchParams.append('status', s));
 
@@ -820,6 +847,7 @@
 
         document.getElementById('filter_item_code').addEventListener('input', handleFilter);
         document.getElementById('filter_fabric_name').addEventListener('input', handleFilter);
+        document.getElementById('filter_supplier_name').addEventListener('change', handleFilter);
         document.querySelectorAll('.status-checkbox').forEach(cb => cb.addEventListener('change', handleFilter));
 
         function toggleSidebar() {

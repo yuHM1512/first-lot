@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 
 <head>
@@ -29,6 +29,61 @@
                 },
             },
         }
+        function toggleRowEmailMenu(evt, btn) {
+            if (!btn) return;
+            if (evt) evt.stopPropagation();
+            const menu = btn.parentElement.querySelector('.email-menu');
+            if (!menu) return;
+            document.querySelectorAll('.email-menu').forEach(m => {
+                if (m !== menu) m.classList.add('hidden');
+            });
+            menu.classList.toggle('hidden');
+        }
+
+        async function sendMissingFirstLot(btn) {
+            const menu = btn.closest('.email-menu');
+            if (!menu) return;
+            const serNo = menu.dataset.serNo;
+            if (!serNo) return;
+
+            const checked = Array.from(menu.querySelectorAll('input[data-missing-item]:checked'));
+            const items = checked.map(i => i.getAttribute('data-missing-item')).filter(Boolean);
+            if (items.length === 0) {
+                alert('Vui lòng chọn ít nhất 1 mục yêu cầu.');
+                return;
+            }
+
+            if (!confirm(`Gửi email xin lại 1st lot cho ${serNo}?`)) return;
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                const response = await fetch('/api/send-email-missing-1stlot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ser_no: serNo, items })
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Đã gửi email xin lại 1st lot thành công.');
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + (result.detail || result.message || 'Không xác định'));
+                }
+            } catch (e) {
+                alert('Lỗi kết nối server');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.email-menu').forEach(m => m.classList.add('hidden'));
+        });
+
     </script>
     <style type="text/tailwindcss">
         .custom-scrollbar::-webkit-scrollbar { height: 10px; width: 10px; }
@@ -105,6 +160,11 @@
                 <span class="sidebar-text">Thông tin vải</span>
             </a>
             <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/fabric-schedule/">
+                <span class="material-symbols-outlined">event</span>
+                <span class="sidebar-text">Check lịch vải</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
                 href="/history/">
                 <span class="material-symbols-outlined">history</span>
                 <span class="sidebar-text">1st Lot History</span>
@@ -130,14 +190,14 @@
                 <span class="sidebar-text">Cài đặt</span>
             </a>
             <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
-                href="#">
-                <span class="material-symbols-outlined">group</span>
-                <span class="sidebar-text">Vai trò người dùng</span>
+                href="/guide/">
+                <span class="material-symbols-outlined">menu_book</span>
+                <span class="sidebar-text">Hướng dẫn</span>
             </a>
         </nav>
 
         <div class="p-4 border-t border-slate-100 italic text-[10px] text-slate-400 text-center sidebar-text">
-            &copy; 2024 SwiftOrder Pro v2.0
+            M29 Digital Team
         </div>
     </aside>
 
@@ -167,11 +227,41 @@
                         <span class="material-symbols-outlined">dark_mode</span>
                         <span class="theme-label hidden md:inline text-xs font-semibold">Night</span>
                     </button>
-                    <button class="p-2 text-slate-400 hover:text-slate-600 relative">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span
-                            class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                    </button>
+                    <div class="relative">
+                        <button id="notiButton" class="p-2 text-slate-400 hover:text-slate-600 relative">
+                            <span class="material-symbols-outlined">notifications</span>
+                            {% if notifications_count > 0 %}
+                            <span
+                                class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-extrabold rounded-full flex items-center justify-center border-2 border-white">
+                                {{ notifications_count }}
+                            </span>
+                            {% endif %}
+                        </button>
+                        <div id="notiDropdown"
+                            class="hidden absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50">
+                            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Thông
+                                    báo</span>
+                                <span class="text-[10px] font-semibold text-slate-400">
+                                    {{ notifications_count }}
+                                </span>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto custom-scrollbar">
+                                {% if notifications_items and notifications_items|length > 0 %}
+                                {% for n in notifications_items %}
+                                <div class="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs font-semibold text-slate-700">{{ n.message }}</p>
+                                    {% if n.hint %}
+                                    <p class="text-[10px] text-slate-400 mt-1">{{ n.hint }}</p>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                                {% else %}
+                                <div class="px-4 py-6 text-center text-xs text-slate-400">Không có thông báo mới</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex items-center gap-4 border-l border-slate-100 pl-6 ml-3">
                         <div class="flex flex-col items-end">
                             <span class="text-xs font-black text-slate-800">{{ user.name if user else 'Guest' }}</span>
@@ -202,6 +292,7 @@
         <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
             <div class="max-w-7xl mx-auto space-y-8">
                 <!-- Stat Cards -->
+                {% if user.role != 'QA' %}
                 <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                     <div
                         class="bg-surface p-6 rounded-3xl border border-slate-200/50 shadow-sm hover:shadow-md transition-shadow">
@@ -260,160 +351,256 @@
                         </p>
                     </div>
                 </section>
+                {% endif %}
 
                 <!-- Data Table Container -->
                 <section class="bg-surface rounded-3xl border border-slate-200 shadow-sm flex flex-col">
                     <div
-                        class="px-8 py-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-6 bg-white/50 backdrop-blur-sm sticky left-0 shrink-0 z-30">
+                        class="px-8 py-6 border-b border-slate-100 flex flex-col gap-4 bg-white/50 backdrop-blur-sm sticky left-0 shrink-0 z-30">
                         <div class="flex-shrink-0">
                             <h3 class="text-lg font-bold text-slate-800">Danh sách theo dõi 1st Lot</h3>
                             <p class="text-xs text-slate-400 font-medium">Quản lý các yêu cầu lot vải sản xuất</p>
                         </div>
 
                         <!-- Inline Filters -->
-                        <div class="flex-1 flex flex-wrap items-center justify-end gap-3 min-w-[600px]">
-                            <div class="relative w-48 group/sample-type z-50">
-                                <div tabindex="0"
-                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal cursor-pointer flex justify-between items-center group-focus-within/sample-type:ring-2 group-focus-within/sample-type:ring-accent/20 group-focus-within/sample-type:border-accent transition-all text-slate-500">
-                                    <span class="select-none truncate" id="sample-type-filter-text">
-                                        {% if filters.sample_type and filters.sample_type|length > 0 %}
-                                        Sample Type ({{ filters.sample_type|length }})
-                                        {% else %}
-                                        Sample Type...
+                        <div class="w-full flex flex-wrap items-start gap-3 overflow-visible">
+                            {% if user.role not in ['KT', 'QA'] %}
+                            <div class="flex flex-col gap-1 w-48">
+                                <span
+                                    class="inline-flex items-center h-6 text-[10px] uppercase font-bold px-2 py-1 rounded mb-1 bg-accent text-white">Sample
+                                    Type</span>
+                                <div class="relative w-full group/sample-type z-40 focus-within:z-[70]">
+                                    <div tabindex="0"
+                                        class="w-full h-9 bg-white border border-slate-200 rounded-md py-1.5 px-2.5 text-[10px] font-normal cursor-pointer flex justify-between items-center shadow-sm focus:outline-none group-focus-within/sample-type:ring-2 group-focus-within/sample-type:ring-accent/20 group-focus-within/sample-type:border-accent transition-all text-slate-600">
+                                        <span class="select-none truncate" id="sample-type-filter-text">
+                                            {% if filters.sample_type and filters.sample_type|length > 0 %}
+                                            Sample Type ({{ filters.sample_type|length }})
+                                            {% else %}
+                                            Sample Type...
+                                            {% endif %}
+                                        </span>
+                                        <span class="material-symbols-outlined text-[14px]">expand_more</span>
+                                    </div>
+                                    <div
+                                        class="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg opacity-0 invisible group-focus-within/sample-type:opacity-100 group-focus-within/sample-type:visible transition-all p-2 space-y-1 max-h-60 overflow-y-auto custom-scrollbar z-[80]">
+                                        {% if filter_options %}
+                                        {% for st in filter_options.sample_types %}
+                                        <label
+                                            class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                            <input type="checkbox" value="{{ st }}"
+                                                class="sample-type-checkbox text-accent rounded-sm focus:ring-accent/20"
+                                                {% if st in filters.sample_type %}checked{% endif %}>
+                                            {{ st }}
+                                        </label>
+                                        {% endfor %}
                                         {% endif %}
-                                    </span>
-                                    <span class="material-symbols-outlined text-[14px]">expand_more</span>
-                                </div>
-                                <div
-                                    class="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg opacity-0 invisible group-focus-within/sample-type:opacity-100 group-focus-within/sample-type:visible transition-all p-2 space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
-                                    {% if filter_options %}
-                                    {% for st in filter_options.sample_types %}
-                                    <label
-                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
-                                        <input type="checkbox" value="{{ st }}"
-                                            class="sample-type-checkbox text-accent rounded-sm focus:ring-accent/20" {%
-                                            if st in filters.sample_type %}checked{% endif %}>
-                                        {{ st }}
-                                    </label>
-                                    {% endfor %}
-                                    {% endif %}
+                                    </div>
                                 </div>
                             </div>
-                            <div class="w-32 relative">
-                                <input type="text" id="filter-season" list="season-list"
-                                    value="{{ filters.season if filters else '' }}"
-                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-slate-400"
-                                    placeholder="Mùa (Season)..." />
-                                <datalist id="season-list">
-                                    {% if filter_options %}{% for s in filter_options.seasons %}<option value="{{ s }}">
-                                        {% endfor %}{% endif %}
-                                </datalist>
-                            </div>
-                            <div class="w-48 relative">
-                                <input type="text" id="filter-model" list="model-list"
-                                    value="{{ filters.model_description if filters else '' }}"
-                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-slate-400"
-                                    placeholder="Loại vải (Description)..." />
-                                <datalist id="model-list">
-                                    {% if filter_options %}{% for m in filter_options.model_descriptions %}<option
-                                        value="{{ m }}">{% endfor %}{% endif %}
-                                </datalist>
-                            </div>
-                            <div class="relative w-40 group/status z-50">
-                                <div tabindex="0"
-                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal cursor-pointer flex justify-between items-center group-focus-within/status:ring-2 group-focus-within/status:ring-accent/20 group-focus-within/status:border-accent transition-all text-slate-500">
-                                    <span class="select-none truncate" id="status-filter-text">
-                                        {% if filters.status and filters.status|length > 0 %}
-                                        Đã chọn ({{ filters.status|length }})
-                                        {% else %}
-                                        Hiệu lực 1st lot...
-                                        {% endif %}
-                                    </span>
-                                    <span class="material-symbols-outlined text-[14px]">expand_more</span>
-                                </div>
-                                <div
-                                    class="absolute top-full left-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg opacity-0 invisible group-focus-within/status:opacity-100 group-focus-within/status:visible transition-all p-2 space-y-1">
-                                    <label
-                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
-                                        <input type="checkbox" value="Còn hiệu lực"
-                                            class="status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
-                                            if 'Còn hiệu lực' in filters.status %}checked{% endif %}>
-                                        Còn hiệu lực
-                                    </label>
-                                    <label
-                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
-                                        <input type="checkbox" value="Hết hiệu lực"
-                                            class="status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
-                                            if 'Hết hiệu lực' in filters.status %}checked{% endif %}>
-                                        Hết hiệu lực
-                                    </label>
-                                    <label
-                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
-                                        <input type="checkbox" value="Chưa có"
-                                            class="status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
-                                            if 'Chưa có' in filters.status %}checked{% endif %}>
-                                        Chưa có
-                                    </label>
+                            {% endif %}
+                            <div class="flex flex-col gap-1">
+                                <span
+                                    class="inline-flex items-center h-6 text-[10px] uppercase font-bold px-2 py-1 rounded mb-1 bg-accent text-white">Mùa</span>
+                                <div class="relative w-full">
+                                    <input type="text" id="filter-season" list="season-list"
+                                        value="{{ filters.season if filters else '' }}"
+                                        class="w-full h-9 bg-white border border-slate-200 rounded-md py-1.5 px-2.5 text-[10px] font-normal text-slate-600 focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none appearance-none transition-all placeholder:text-slate-400 shadow-sm"
+                                        placeholder="Mùa (Season)..." />
+                                    <datalist id="season-list">
+                                        {% if filter_options %}{% for s in filter_options.seasons %}<option
+                                            value="{{ s }}">
+                                            {% endfor %}{% endif %}
+                                    </datalist>
                                 </div>
                             </div>
-                            <div class="relative w-40 group/email-status z-50">
-                                <div tabindex="0"
-                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal cursor-pointer flex justify-between items-center group-focus-within/email-status:ring-2 group-focus-within/email-status:ring-accent/20 group-focus-within/email-status:border-accent transition-all text-slate-500">
-                                    <span class="select-none truncate" id="email-status-filter-text">
-                                        {% if filters.email_status and filters.email_status|length > 0 %}
-                                        Email: Đã chọn ({{ filters.email_status|length }})
-                                        {% else %}
-                                        Email Status...
-                                        {% endif %}
-                                    </span>
-                                    <span class="material-symbols-outlined text-[14px]">expand_more</span>
-                                </div>
-                                <div
-                                    class="absolute top-full left-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg opacity-0 invisible group-focus-within/email-status:opacity-100 group-focus-within/email-status:visible transition-all p-2 space-y-1">
-                                    <label
-                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
-                                        <input type="checkbox" value="Chưa yêu cầu"
-                                            class="email-status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
-                                            if 'Chưa yêu cầu' in filters.email_status %}checked{% endif %}>
-                                        Chưa yêu cầu
-                                    </label>
-                                    <label
-                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
-                                        <input type="checkbox" value="Đã yêu cầu"
-                                            class="email-status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
-                                            if 'Đã yêu cầu' in filters.email_status %}checked{% endif %}>
-                                        Đã yêu cầu
-                                    </label>
-                                    <label
-                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
-                                        <input type="checkbox" value="Tái yêu cầu"
-                                            class="email-status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
-                                            if 'Tái yêu cầu' in filters.email_status %}checked{% endif %}>
-                                        Tái yêu cầu
-                                    </label>
-                                    <label
-                                        class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
-                                        <input type="checkbox" value="Cần tái yêu cầu"
-                                            class="email-status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
-                                            if 'Cần tái yêu cầu' in filters.email_status %}checked{% endif %}>
-                                        Cần tái yêu cầu
-                                    </label>
+                            <div class="flex flex-col gap-1">
+                                <span
+                                    class="inline-flex items-center h-6 text-[10px] uppercase font-bold px-2 py-1 rounded mb-1 bg-accent text-white">Iman</span>
+                                <div class="relative w-full">
+                                    <input type="text" id="filter-iman" list="fgcc-list"
+                                        value="{{ filters.fg_cc_code if filters else '' }}"
+                                        class="w-full h-9 bg-white border border-slate-200 rounded-md py-1.5 px-2.5 text-[10px] font-normal text-slate-600 focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none appearance-none transition-all placeholder:text-slate-400 shadow-sm"
+                                        placeholder="Iman (FG CC)..." />
+                                    <datalist id="fgcc-list">
+                                        {% if filter_options %}{% for f in filter_options.fg_cc_codes %}<option
+                                            value="{{ f }}">
+                                            {% endfor %}{% endif %}
+                                    </datalist>
                                 </div>
                             </div>
-                            <div class="w-40 relative">
-                                <input type="text" id="filter-item" list="item-list"
-                                    value="{{ filters.item_code if filters else '' }}"
-                                    class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl py-1.5 px-3 text-[10px] font-normal focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all placeholder:text-slate-400"
-                                    placeholder="Item code vải..." />
-                                <datalist id="item-list">
-                                    {% if filter_options %}{% for i in filter_options.item_codes %}<option
-                                        value="{{ i }}">{% endfor %}{% endif %}
-                                </datalist>
+                            <div class="flex flex-col gap-1">
+                                <span
+                                    class="inline-flex items-center h-6 text-[10px] uppercase font-bold px-2 py-1 rounded mb-1 bg-accent text-white">Description</span>
+                                <div class="relative w-full">
+                                    <input type="text" id="filter-model" list="model-list"
+                                        value="{{ filters.model_description if filters else '' }}"
+                                        class="w-full h-9 bg-white border border-slate-200 rounded-md py-1.5 px-2.5 text-[10px] font-normal text-slate-600 focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none appearance-none transition-all placeholder:text-slate-400 shadow-sm"
+                                        placeholder="Loại vải (Description)..." />
+                                    <datalist id="model-list">
+                                        {% if filter_options %}{% for m in filter_options.model_descriptions %}<option
+                                            value="{{ m }}">{% endfor %}{% endif %}
+                                    </datalist>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <span
+                                    class="inline-flex items-center h-6 text-[10px] uppercase font-bold px-2 py-1 rounded mb-1 bg-accent text-white">Hiệu
+                                    lực</span>
+                                <div class="relative w-full group/status z-40 focus-within:z-[70]">
+                                    <div tabindex="0"
+                                        class="w-full h-9 bg-white border border-slate-200 rounded-md py-1.5 px-2.5 text-[10px] font-normal cursor-pointer flex justify-between items-center shadow-sm group-focus-within/status:ring-2 group-focus-within/status:ring-accent/20 group-focus-within/status:border-accent transition-all text-slate-600">
+                                        <span class="select-none truncate" id="status-filter-text">
+                                            {% if filters.status and filters.status|length > 0 %}
+                                            Đã chọn ({{ filters.status|length }})
+                                            {% else %}
+                                            Hiệu lực 1st lot...
+                                            {% endif %}
+                                        </span>
+                                        <span class="material-symbols-outlined text-[14px]">expand_more</span>
+                                    </div>
+                                    <div
+                                        class="absolute top-full left-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg opacity-0 invisible group-focus-within/status:opacity-100 group-focus-within/status:visible transition-all p-2 space-y-1 z-[80]">
+                                        <label
+                                            class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                            <input type="checkbox" value="Còn hiệu lực"
+                                                class="status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
+                                                if 'Còn hiệu lực' in filters.status %}checked{% endif %}>
+                                            Còn hiệu lực
+                                        </label>
+                                        <label
+                                            class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                            <input type="checkbox" value="Hết hiệu lực"
+                                                class="status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
+                                                if 'Hết hiệu lực' in filters.status %}checked{% endif %}>
+                                            Hết hiệu lực
+                                        </label>
+                                        <label
+                                            class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                            <input type="checkbox" value="Chưa có"
+                                                class="status-checkbox text-accent rounded-sm focus:ring-accent/20" {%
+                                                if 'Chưa có' in filters.status %}checked{% endif %}>
+                                            Chưa có
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if user.role != 'QA' %}
+                            <div class="flex flex-col gap-1">
+                                <span
+                                    class="inline-flex items-center h-6 text-[10px] uppercase font-bold px-2 py-1 rounded mb-1 bg-accent text-white">Email</span>
+                                <div class="relative w-full group/email-status z-40 focus-within:z-[70]">
+                                    <div tabindex="0"
+                                        class="w-full h-9 bg-white border border-slate-200 rounded-md py-1.5 px-2.5 text-[10px] font-normal cursor-pointer flex justify-between items-center shadow-sm group-focus-within/email-status:ring-2 group-focus-within/email-status:ring-accent/20 group-focus-within/email-status:border-accent transition-all text-slate-600">
+                                        <span class="select-none truncate" id="email-status-filter-text">
+                                            {% if filters.email_status and filters.email_status|length > 0 %}
+                                            Email: Đã chọn ({{ filters.email_status|length }})
+                                            {% else %}
+                                            Email Status...
+                                            {% endif %}
+                                        </span>
+                                        <span class="material-symbols-outlined text-[14px]">expand_more</span>
+                                    </div>
+                                    <div
+                                        class="absolute top-full left-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg opacity-0 invisible group-focus-within/email-status:opacity-100 group-focus-within/email-status:visible transition-all p-2 space-y-1 z-[80]">
+                                        <label
+                                            class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                            <input type="checkbox" value="Chưa yêu cầu"
+                                                class="email-status-checkbox text-accent rounded-sm focus:ring-accent/20"
+                                                {% if 'Chưa yêu cầu' in filters.email_status %}checked{% endif %}>
+                                            Chưa yêu cầu
+                                        </label>
+                                        <label
+                                            class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                            <input type="checkbox" value="Đã yêu cầu"
+                                                class="email-status-checkbox text-accent rounded-sm focus:ring-accent/20"
+                                                {% if 'Đã yêu cầu' in filters.email_status %}checked{% endif %}>
+                                            Đã yêu cầu
+                                        </label>
+                                        <label
+                                            class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                            <input type="checkbox" value="Tái yêu cầu"
+                                                class="email-status-checkbox text-accent rounded-sm focus:ring-accent/20"
+                                                {% if 'Tái yêu cầu' in filters.email_status %}checked{% endif %}>
+                                            Tái yêu cầu
+                                        </label>
+                                        <label
+                                            class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-[10px] font-medium text-slate-700">
+                                            <input type="checkbox" value="Cần tái yêu cầu"
+                                                class="email-status-checkbox text-accent rounded-sm focus:ring-accent/20"
+                                                {% if 'Cần tái yêu cầu' in filters.email_status %}checked{% endif %}>
+                                            Cần tái yêu cầu
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="flex flex-col gap-1 w-40">
+                                <span
+                                    class="inline-flex items-center h-6 text-[10px] uppercase font-bold px-2 py-1 rounded mb-1 bg-accent text-white">Quality</span>
+                                <div class="relative w-full">
+                                    <select id="filter-quality-status"
+                                        class="w-full h-9 bg-white border border-slate-200 rounded-md py-1.5 px-2.5 text-[10px] font-normal focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all text-slate-600 shadow-sm">
+                                        <option value="">Quality Status...</option>
+                                        <option value="Chưa kiểm" {% if filters.quality_status=='Chưa kiểm' %}selected{%
+                                            endif %}>Chưa kiểm</option>
+                                        <option value="Đã kiểm" {% if filters.quality_status=='Đã kiểm' %}selected{%
+                                            endif %}>Đã kiểm</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <span
+                                    class="inline-flex items-center h-6 text-[10px] uppercase font-bold px-2 py-1 rounded mb-1 bg-accent text-white">Tiếp
+                                    nhận</span>
+                                <div class="relative w-full">
+                                    <select id="filter-received-status"
+                                        class="w-full h-9 bg-white border border-slate-200 rounded-md py-1.5 px-2.5 text-[10px] font-normal focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all text-slate-600 shadow-sm">
+                                        <option value="">Tình trạng tiếp nhận...</option>
+                                        <option value="Đã tiếp nhận" {% if filters.received_status=='Đã tiếp nhận'
+                                            %}selected{% endif %}>Đã tiếp nhận</option>
+                                        <option value="Đã bàn giao" {% if filters.received_status=='Đã bàn giao'
+                                            %}selected{% endif %}>Đã bàn giao</option>
+                                    </select>
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="flex flex-col gap-1 col-span-2">
+                                <span
+                                    class="inline-flex items-center h-6 text-[10px] uppercase font-bold px-2 py-1 rounded mb-1 bg-accent text-white">Nhà
+                                    cung ứng</span>
+                                <div class="relative w-full">
+                                    <input type="text" id="filter-supplier" list="supplier-list"
+                                        value="{{ filters.supplier_name if filters else '' }}"
+                                        class="w-full h-9 bg-white border border-slate-200 rounded-md py-1.5 px-2.5 text-[10px] font-normal text-slate-600 focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none appearance-none transition-all placeholder:text-slate-400 shadow-sm"
+                                        placeholder="Nhà cung ứng..." />
+                                    <datalist id="supplier-list">
+                                        {% if filter_options %}{% for s in filter_options.supplier_names %}<option
+                                            value="{{ s }}">{% endfor %}{% endif %}
+                                    </datalist>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-1 col-span-2">
+                                <span
+                                    class="inline-flex items-center h-6 text-[10px] uppercase font-bold px-2 py-1 rounded mb-1 bg-accent text-white">Item
+                                    Code</span>
+                                <div class="relative w-full">
+                                    <input type="text" id="filter-item" list="item-list"
+                                        value="{{ filters.item_code if filters else '' }}"
+                                        class="w-full h-9 bg-white border border-slate-200 rounded-md py-1.5 px-2.5 text-[10px] font-normal text-slate-600 focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none appearance-none transition-all placeholder:text-slate-400 shadow-sm"
+                                        placeholder="Item code vải..." />
+                                    <datalist id="item-list">
+                                        {% if filter_options %}{% for i in filter_options.item_codes %}<option
+                                            value="{{ i }}">{% endfor %}{% endif %}
+                                    </datalist>
+                                </div>
                             </div>
 
-                            {% if filters.season or filters.model_description or filters.item_code or
+                            <div class="basis-full h-0"></div>
+                            {% if filters.season or filters.fg_cc_code or filters.model_description or filters.item_code
+                            or filters.supplier_name or filters.quality_status or filters.received_status or
                             (filters.status and filters.status|length > 0) or
-                            (filters.sample_type and filters.sample_type|length > 0) or
+                            (filters.sample_type and filters.sample_type|length > 0 and user.role not in ['KT', 'QA'])
+                            or
                             (filters.email_status and filters.email_status|length > 0) or
                             filters.show_timeout %}
                             <button onclick="window.location.href='/first-lot/'"
@@ -423,13 +610,15 @@
                             </button>
                             {% endif %}
 
-                            <div class="h-6 w-px bg-slate-200 mx-1"></div>
+                            <div class="h-6 w-px bg-slate-200 mx-1 hidden"></div>
 
+                            {% if user.role not in ['KT', 'QA'] %}
                             <button id="syncButton"
                                 class="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all shadow-md shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span class="material-symbols-outlined text-sm">sync</span>
                                 <span id="syncText">Đồng bộ</span>
                             </button>
+                            {% endif %}
                             {% if user.role in ['admin', 'MD'] %}
                             <button id="emailButton" onclick="sendEmails('pending')"
                                 class="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 hover:scale-105 active:scale-95 transition-all shadow-md shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -441,249 +630,356 @@
                                 <span class="material-symbols-outlined text-sm">history_edu</span>
                                 <span id="resendText">Gửi lại Email</span>
                             </button>
+                            <button id="mergeSendButton" onclick="sendMergedMissingFirstLotEmails()" disabled
+                                class="flex items-center gap-2 px-6 py-2 bg-slate-700 text-white rounded-xl text-xs font-bold hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all shadow-md shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="material-symbols-outlined text-sm">mark_email_read</span>
+                                <span>Gộp gửi Follow Up 1st lot (<span id="mergeSendCount">0</span>)</span>
+                            </button>
                             {% endif %}
-                        </div>
-                    </div>
 
-                    <div class="overflow-x-auto custom-scrollbar flex-1 relative max-h-[600px]">
-                        <table class="w-full text-left border-separate border-spacing-0 min-w-[1500px]">
-                            <thead class="bg-slate-100 sticky top-0 z-20">
-                                <tr class="text-slate-800 text-[11px] font-bold uppercase tracking-wider">
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[140px]">
-                                        SER No.</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[150px]">
-                                        Item Code</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[140px] text-center">
-                                        Hiệu lực 1st lot</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[140px] text-center">
-                                        Ngày dự kiến nhận</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[120px] text-center">
-                                        Email Status</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[150px] text-center">
-                                        Tình trạng tiếp nhận</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[200px]">
-                                        Thông tin</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[150px]">
-                                        Sample Type</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[140px]">
-                                        Season</th>
-                                    <th
-                                        class="px-3 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[70px] text-center">
-                                        FG CC Code</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[120px]">
-                                        Model No.</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[250px]">
-                                        Model Description</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[250px]">
-                                        CPT Supplier</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[100px]">
-                                        Item</th>
-                                    <th
-                                        class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[300px]">
-                                        Item Description</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">
-                                {% for item in requests %}
-                                <tr class="transition-colors group relative hover:z-30 {% if item.is_timeout %}bg-red-50/70 hover:bg-red-100/80 animate-pulse-subtle{% elif item.validity_status != 'Còn hiệu lực' %}cursor-pointer hover:bg-slate-100/80{% else %}hover:bg-slate-100/50{% endif %}"
-                                    {% if item.validity_status !='Còn hiệu lực' %} onclick="handleMasterEdit(this)"
-                                    data-item-code="{{ item.item_code }}" data-item-name="{{ item.item or '' }}"
-                                    data-model-code="{{ item.model_no or '' }}"
-                                    data-fabric-supplier="{{ item.supplier_lookup_name or '' }}"
-                                    data-unit="{{ item.unit or '' }}" data-color="{{ item.color or '' }}"
-                                    data-description="{{ item.item_description or '' }}" data-request-id="{{ item.id }}"
-                                    data-received-status="{{ item.first_lot_received_status or '' }}"
-                                    data-remark="{{ item.remark or '' }}" {% endif %}>
-                                    <td class="px-6 py-5 font-bold text-slate-700 text-sm">#{{ item.ser_no or '---' }}
-                                    </td>
-                                    <td class="px-6 py-5 text-xs text-accent font-black">
-                                        {{ item.item_code or '---' }}
-                                    </td>
-                                    <td class="px-6 py-5 text-center">
-                                        {% if item.sample_type == 'CPT 1st lot &PPS' %}
-                                        <div class="flex items-center justify-center gap-2 group/validity">
-                                            <span
-                                                class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase cursor-help relative group/tooltip
+                        </div>
+
+                        <div class="overflow-x-auto custom-scrollbar flex-1 relative max-h-[600px]">
+                            <table class="w-full text-left border-separate border-spacing-0 min-w-[1500px]">
+                                <thead class="bg-slate-100 sticky top-0 z-20">
+                                    <tr class="text-slate-800 text-[11px] font-bold uppercase tracking-wider">
+                                        {% if user and user.role in ['admin', 'MD'] %}
+                                        <th
+                                            class="px-3 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 w-12 text-center">
+                                            <input type="checkbox" id="selectAllRows"
+                                                class="rounded border-slate-300 text-accent focus:ring-accent/20" />
+                                        </th>
+                                        {% endif %}
+                                        <th
+                                            class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[140px]">
+                                            SER No.</th>
+                                        <th
+                                            class="px-3 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[110px] text-center">
+                                            Iman</th>
+                                        <th
+                                            class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[300px]">
+                                            Item Description</th>
+                                        <th
+                                            class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[250px]">
+                                            Model Description</th>
+                                        <th
+                                            class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[250px]">
+                                            CPT Supplier</th>
+                                        <th
+                                            class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[140px] text-center">
+                                            Hiệu lực 1st lot</th>
+                                        {% if user.role != 'QA' %}
+                                        <th
+                                            class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[120px] text-center">
+                                            Email Status</th>
+                                        {% else %}
+                                        <th
+                                            class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[120px] text-center">
+                                            Quality Status</th>
+                                        {% endif %}
+                                        <th
+                                            class="px-6 py-5 border-b border-slate-200 bg-slate-100 sticky top-0 min-w-[150px] text-center">
+                                            Tình trạng tiếp nhận</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    {% for item in requests %}
+                                    {% set raw_status = item.first_lot_received_status or '' %}
+                                    {% if 'bÃ' in raw_status or 'bàn' in raw_status %}
+                                    {% set real_status = 'Đã bàn giao' %}
+                                    {% elif 'tiá' in raw_status or 'tiếp' in raw_status %}
+                                    {% set real_status = 'Đã tiếp nhận' %}
+                                    {% else %}
+                                    {% set real_status = raw_status %}
+                                    {% endif %}
+                                    {% if user.role != 'QA' or real_status in ['Đã tiếp nhận', 'Đã bàn giao'] %}
+                                    <tr class="transition-colors group relative hover:z-30 {% if item.is_timeout %}bg-red-50/70 hover:bg-red-100/80 animate-pulse-subtle{% elif item.validity_status != 'Còn hiệu lực' %}{% if user.role != 'KT' and not (user.role == 'QA' and real_status != 'Đã bàn giao') %}cursor-pointer hover:bg-slate-100/80{% else %}hover:bg-slate-100/50{% endif %}{% else %}hover:bg-slate-100/50{% endif %} {% if user.role == 'QA' and real_status != 'Đã bàn giao' %}cursor-not-allowed opacity-70{% endif %}"
+                                        {% if user.role !='KT' and not (user.role=='QA' and real_status !='Đã bàn giao'
+                                        ) %}onclick="handleMasterEdit(this)" {% endif %}
+                                        data-item-code="{{ item.item_code }}" data-item-name="{{ item.item or '' }}"
+                                        data-model-code="{{ item.model_no or '' }}"
+                                        data-fabric-supplier="{{ item.supplier_lookup_name or '' }}"
+                                        data-unit="{{ item.unit or '' }}" data-color="{{ item.color or '' }}"
+                                        data-description="{{ item.item_description or '' }}"
+                                        data-request-id="{{ item.id }}" data-received-status="{{ real_status or '' }}"
+                                        data-remark="{{ item.remark or '' }}">
+                                        {% if user and user.role in ['admin', 'MD'] %}
+                                        <td class="px-3 py-5 text-center" onclick="event.stopPropagation()">
+                                            {% if item.ser_no %}
+                                            <input type="checkbox"
+                                                class="row-merge-checkbox rounded border-slate-300 text-accent focus:ring-accent/20"
+                                                data-ser-no="{{ item.ser_no }}" />
+                                            {% endif %}
+                                        </td>
+                                        {% endif %}
+                                        <td class="px-6 py-5 font-bold text-slate-700 text-sm">#{{ item.ser_no or '---'
+                                            }}
+                                        </td>
+                                        <td class="px-3 py-5 text-xs text-slate-600 font-semibold text-center">
+                                            {{ item.fg_cc_code or '---' }}
+                                        </td>
+                                        <td class="px-6 py-5 text-[11px] text-slate-500 max-w-[300px] truncate"
+                                            title="{{ item.item_description }}">
+                                            {{ item.item_description or '---' }}
+                                        </td>
+                                        <td class="px-6 py-5 text-[11px] text-slate-500 max-w-[250px] truncate"
+                                            title="{{ item.model_description }}">
+                                            {{ item.model_description or '---' }}
+                                        </td>
+                                        <td class="px-6 py-5 text-xs text-slate-500 font-medium">
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                                                {{ item.cpt_supplier or '---' }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-5 text-center">
+                                            {% if item.sample_type == 'CPT 1st lot &PPS' %}
+                                            <div class="flex items-center justify-center gap-2 group/validity">
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase cursor-help relative group/tooltip
                                                 {% if item.validity_color == 'green' %}bg-green-50 text-green-700 border border-green-200/50
                                                 {% elif item.validity_color == 'red' %}bg-red-50 text-red-700 border border-red-200/50
                                                 {% else %}bg-slate-50 text-slate-500 border border-slate-200{% endif %}">
-                                                {{ item.validity_status }}
+                                                    {{ item.validity_status }}
 
-                                                <!-- Tooltip -->
-                                                <div
-                                                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all shadow-xl z-50 normal-case text-left font-medium space-y-1.5 pointer-events-none before:content-[''] before:absolute before:top-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-t-slate-800">
+                                                    <!-- Tooltip -->
                                                     <div
-                                                        class="flex justify-between items-center border-b border-slate-700 pb-1.5 mb-1.5">
-                                                        <span class="text-slate-400">Ngày hết hạn:</span>
-                                                        <div class="text-right">
-                                                            <span class="font-bold text-accent">{{
-                                                                item.main_expiration_str if item.main_expiration_str
-                                                                else '---' }}</span>
-                                                            <span
-                                                                class="text-[8px] font-normal text-slate-300 block">({{
-                                                                item.validity_status }})</span>
+                                                        class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-[10px] rounded-xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all shadow-xl z-50 normal-case text-left font-medium space-y-1.5 pointer-events-none before:content-[''] before:absolute before:top-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-t-slate-800">
+                                                        <div
+                                                            class="flex justify-between items-center border-b border-slate-700 pb-1.5 mb-1.5">
+                                                            <span class="text-slate-400">Ngày hết hạn:</span>
+                                                            <div class="text-right">
+                                                                <span class="font-bold text-accent">{{
+                                                                    item.main_expiration_str if item.main_expiration_str
+                                                                    else '---' }}</span>
+                                                                <span
+                                                                    class="text-[8px] font-normal text-slate-300 block">({{
+                                                                    item.validity_status }})</span>
+                                                            </div>
+                                                        </div>
+                                                        {% if item.reasons_str %}
+                                                        <div
+                                                            class="text-red-400 font-bold border-b border-slate-700 pb-1.5 mb-1.5 leading-snug">
+                                                            ?? {{ item.reasons_str }}
+                                                        </div>
+                                                        {% endif %}
+                                                        <div class="flex justify-between items-center">
+                                                            <span class="text-slate-400">Color Test Report:</span>
+                                                            <span class="font-bold">{{ item.color_exp_str if
+                                                                item.color_exp_str else '---' }}</span>
+                                                        </div>
+                                                        <div class="flex justify-between items-center">
+                                                            <span class="text-slate-400">MTSR Report:</span>
+                                                            <span class="font-bold">{{ item.mtsr_exp_str if
+                                                                item.mtsr_exp_str else '---' }}</span>
                                                         </div>
                                                     </div>
-                                                    {% if item.reasons_str %}
-                                                    <div
-                                                        class="text-red-400 font-bold border-b border-slate-700 pb-1.5 mb-1.5 leading-snug">
-                                                        ⚠️ {{ item.reasons_str }}
+                                                </span>
+                                                {% if item.validity_status != 'Còn hiệu lực' %}
+                                                <div class="p-1.5 text-accent bg-accent/5 transition-all shadow-sm border border-accent/20 rounded-lg group-hover:bg-accent group-hover:text-white"
+                                                    title="Cập nhật thông tin 1st Lot">
+                                                    <span class="material-symbols-outlined text-sm">edit</span>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            {% else %}
+                                            <span
+                                                class="text-slate-300 text-[10px] font-bold uppercase italic">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        {% if user.role != 'QA' %}
+                                        <td class="px-6 py-5 text-center">
+                                            {% if item.is_timeout %}
+                                            <div class="flex flex-col items-center gap-1">
+                                                <div class="flex items-center justify-center gap-2">
+                                                    <span
+                                                        class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[9px] font-black uppercase border border-red-200 shadow-sm cursor-help"
+                                                        title="Chậm phản hồi (>7 ngày)">
+                                                        <span
+                                                            class="material-symbols-outlined text-[12px] animate-pulse">timer_off</span>
+                                                        NOT RECEIVED
+                                                    </span>
+                                                    {% if item.ser_no and user and user.role in ['admin', 'MD'] %}
+                                                    <div class="relative">
+                                                        <button type="button"
+                                                            class="p-1.5 rounded-md bg-white border border-red-200 text-red-600 hover:bg-red-50 transition-all shadow-sm"
+                                                            title="Gửi email" onclick="toggleRowEmailMenu(event, this)">
+                                                            <span
+                                                                class="material-symbols-outlined text-[14px]">mail</span>
+                                                        </button>
+                                                        <div class="email-menu hidden absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg p-2 z-50"
+                                                            data-ser-no="{{ item.ser_no }}"
+                                                            onclick="event.stopPropagation()">
+                                                            <button type="button"
+                                                                class="w-full text-left px-3 py-2 rounded-lg text-[11px] font-bold bg-blue-600 text-white hover:bg-blue-700"
+                                                                onclick="sendTimeoutEmailRow('{{ item.ser_no }}', this)">
+                                                                Gửi cơ bản
+                                                            </button>
+                                                            <div class="mt-2 pt-2 border-t border-slate-100 space-y-2">
+                                                                <div
+                                                                    class="text-[10px] font-bold uppercase text-slate-400 px-3">
+                                                                    Xin lại 1st lot</div>
+                                                                <label
+                                                                    class="flex items-center gap-2 px-3 text-[11px] text-slate-600">
+                                                                    <input type="checkbox" data-missing-item="1st_lot"
+                                                                        class="rounded border-slate-300 text-accent focus:ring-accent" />
+                                                                    1st lot
+                                                                </label>
+                                                                <label
+                                                                    class="flex items-center gap-2 px-3 text-[11px] text-slate-600">
+                                                                    <input type="checkbox"
+                                                                        data-missing-item="color_test"
+                                                                        class="rounded border-slate-300 text-accent focus:ring-accent" />
+                                                                    Color test report
+                                                                </label>
+                                                                <label
+                                                                    class="flex items-center gap-2 px-3 text-[11px] text-slate-600">
+                                                                    <input type="checkbox" data-missing-item="mtsr"
+                                                                        class="rounded border-slate-300 text-accent focus:ring-accent" />
+                                                                    MTSR
+                                                                </label>
+                                                                <button type="button"
+                                                                    class="w-full mt-1 px-3 py-2 rounded-lg bg-accent text-white text-[11px] font-bold hover:brightness-110"
+                                                                    onclick="sendMissingFirstLot(this)">
+                                                                    Gửi yêu cầu
+                                                                </button>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                     {% endif %}
-                                                    <div class="flex justify-between items-center">
-                                                        <span class="text-slate-400">Color Test Report:</span>
-                                                        <span class="font-bold">{{ item.color_exp_str if
-                                                            item.color_exp_str else '---' }}</span>
-                                                    </div>
-                                                    <div class="flex justify-between items-center">
-                                                        <span class="text-slate-400">MTSR Report:</span>
-                                                        <span class="font-bold">{{ item.mtsr_exp_str if
-                                                            item.mtsr_exp_str else '---' }}</span>
+                                                </div>
+                                                <span class="text-[8px] font-bold text-amber-600 uppercase">{{
+                                                    item.display_email_status }}</span>
+                                            </div>
+                                            {% else %}
+                                            {% set color = item.email_status_color %}
+                                            <div class="flex items-center justify-center gap-2">
+                                                <span
+                                                    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-{{ color }}-50 text-{{ color }}-700 text-[9px] font-black uppercase border border-{{ color }}-100"
+                                                    title="{% if item.email_sent_at %}Đã gửi vào {{ item.email_sent_at.strftime('%d/%m/%Y %H:%M') }}{% endif %}">
+                                                    {% if item.display_email_status in ['Đã yêu cầu', 'Tái yêu cầu'] %}
+                                                    <span class="material-symbols-outlined text-[12px]">done_all</span>
+                                                    {% endif %}
+                                                    {{ item.display_email_status }}
+                                                </span>
+                                                {% if item.ser_no and user and user.role in ['admin', 'MD'] %}
+                                                <div class="relative">
+                                                    <button type="button"
+                                                        class="p-1.5 rounded-md bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
+                                                        title="Gửi email" onclick="toggleRowEmailMenu(event, this)">
+                                                        <span class="material-symbols-outlined text-[14px]">mail</span>
+                                                    </button>
+                                                    <div class="email-menu hidden absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg p-2 z-50"
+                                                        data-ser-no="{{ item.ser_no }}"
+                                                        onclick="event.stopPropagation()">
+                                                        <button type="button"
+                                                            class="w-full text-left px-3 py-2 rounded-lg text-[11px] font-bold bg-blue-600 text-white hover:bg-blue-700"
+                                                            onclick="sendTimeoutEmailRow('{{ item.ser_no }}', this)">
+                                                            Gửi cơ bản
+                                                        </button>
+                                                        <div class="mt-2 pt-2 border-t border-slate-100 space-y-2">
+                                                            <div
+                                                                class="text-[10px] font-bold uppercase text-slate-400 px-3">
+                                                                Xin lại 1st lot</div>
+                                                            <label
+                                                                class="flex items-center gap-2 px-3 text-[11px] text-slate-600">
+                                                                <input type="checkbox" data-missing-item="1st_lot"
+                                                                    class="rounded border-slate-300 text-accent focus:ring-accent" />
+                                                                1st lot
+                                                            </label>
+                                                            <label
+                                                                class="flex items-center gap-2 px-3 text-[11px] text-slate-600">
+                                                                <input type="checkbox" data-missing-item="color_test"
+                                                                    class="rounded border-slate-300 text-accent focus:ring-accent" />
+                                                                Color test report
+                                                            </label>
+                                                            <label
+                                                                class="flex items-center gap-2 px-3 text-[11px] text-slate-600">
+                                                                <input type="checkbox" data-missing-item="mtsr"
+                                                                    class="rounded border-slate-300 text-accent focus:ring-accent" />
+                                                                MTSR
+                                                            </label>
+                                                            <button type="button"
+                                                                class="w-full mt-1 px-3 py-2 rounded-lg bg-accent text-white text-[11px] font-bold hover:brightness-110"
+                                                                onclick="sendMissingFirstLot(this)">
+                                                                Gửi yêu cầu
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </span>
-                                            {% if item.validity_status != 'Còn hiệu lực' %}
-                                            <div class="p-1.5 text-accent bg-accent/5 transition-all shadow-sm border border-accent/20 rounded-lg group-hover:bg-accent group-hover:text-white"
-                                                title="Cập nhật thông tin 1st Lot">
-                                                <span class="material-symbols-outlined text-sm">edit</span>
+                                                {% endif %}
                                             </div>
                                             {% endif %}
-                                        </div>
+                                        </td>
                                         {% else %}
-                                        <span class="text-slate-300 text-[10px] font-bold uppercase italic">N/A</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-6 py-5 text-center">
-                                        {% if item.expected_arrival_date %}
-                                        <div class="text-[11px] font-bold text-slate-700">
-                                            {{ item.expected_arrival_date.strftime('%d-%m-%Y') }}
-                                        </div>
-                                        {% else %}
-                                        <span class="text-slate-300 text-[10px] font-bold italic">---</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-6 py-5 text-center">
-                                        {% if item.is_timeout %}
-                                        <div class="flex flex-col items-center gap-1">
+                                        <td class="px-6 py-5 text-center">
+                                            {% if item.master_quality_checked_at %}
                                             <span
-                                                class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[9px] font-black uppercase border border-red-200 shadow-sm cursor-help"
-                                                title="Chậm phản hồi (>7 ngày)">
-                                                <span
-                                                    class="material-symbols-outlined text-[12px] animate-pulse">timer_off</span>
-                                                NOT RECEIVED
-                                            </span>
-                                            <span class="text-[8px] font-bold text-amber-600 uppercase">{{
-                                                item.display_email_status }}</span>
-                                        </div>
-                                        {% else %}
-                                        {% set color = item.email_status_color %}
-                                        <span
-                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-{{ color }}-50 text-{{ color }}-700 text-[9px] font-black uppercase border border-{{ color }}-100"
-                                            title="{% if item.email_sent_at %}Đã gửi vào {{ item.email_sent_at.strftime('%d/%m/%Y %H:%M') }}{% endif %}">
-                                            {% if item.display_email_status in ['Đã yêu cầu', 'Tái yêu cầu'] %}
-                                            <span class="material-symbols-outlined text-[12px]">done_all</span>
+                                                class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200/60">Đã
+                                                kiểm</span>
+                                            {% else %}
+                                            <span
+                                                class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-500 border border-slate-200">Chưa
+                                                kiểm</span>
                                             {% endif %}
-                                            {{ item.display_email_status }}
-                                        </span>
+                                        </td>
                                         {% endif %}
-                                    </td>
-                                    <td class="px-6 py-5 text-center">
-                                        {% if item.first_lot_received_status %}
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200 shadow-sm">
-                                            {{ item.first_lot_received_status }}
-                                        </span>
-                                        {% else %}
-                                        <span class="text-slate-300 text-[10px] font-bold italic">---</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-6 py-5">
-                                        <div class="text-[11px] text-slate-600 font-medium line-clamp-2"
-                                            title="{{ item.remark }}">
-                                            {{ item.remark or '---' }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-5 text-xs text-slate-500 font-medium">
-                                        {{ item.sample_type or '---' }}
-                                    </td>
-                                    <td class="px-6 py-5 text-xs text-slate-600 font-semibold text-center">{{
-                                        item.season or '---' }}</td>
-                                    <td class="px-3 py-5 text-xs text-slate-500 font-medium text-center">{{
-                                        item.fg_cc_code or '---' }}</td>
-                                    <td class="px-6 py-5 text-xs text-slate-700 font-bold tracking-tight">{{
-                                        item.model_no or '---' }}</td>
-                                    <td class="px-6 py-5 text-[11px] text-slate-500 max-w-[200px] truncate"
-                                        title="{{ item.model_description }}">
-                                        {{ item.model_description or '---' }}
-                                    </td>
-                                    <td class="px-6 py-5 text-xs text-slate-500 font-medium">
-                                        <div class="flex items-center gap-2">
-                                            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
-                                            {{ item.cpt_supplier or '---' }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-5 text-sm font-bold text-slate-700">{{ item.item or '---' }}</td>
-                                    <td class="px-6 py-5 text-[11px] text-slate-500 max-w-[250px] truncate"
-                                        title="{{ item.item_description }}">
-                                        {{ item.item_description or '---' }}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Pagination -->
-                    <div
-                        class="px-8 py-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 bg-slate-50/30 shrink-0">
-                        <span class="font-medium">Hiển thị từ {{ (pagination.page - 1) * pagination.limit + 1 }} đến {{
-                            [pagination.page * pagination.limit, pagination.total_count]|min }} trong tổng số {{
-                            pagination.total_count }} kết quả</span>
-                        <div class="flex items-center gap-1">
-                            <!-- Prev Page -->
-                            {% if pagination.has_prev %}
-                            <a href="{{ request.url.include_query_params(page=pagination.page - 1) }}"
-                                class="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-white hover:text-indigo-600 transition-all">
-                                <span class="material-symbols-outlined text-sm">chevron_left</span>
-                            </a>
-                            {% endif %}
-
-                            <!-- Page Numbers -->
-                            {% for p in range(1, pagination.total_pages + 1) %}
-                            {% if p == pagination.page %}
-                            <span
-                                class="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-lg font-bold shadow-md shadow-indigo-100">{{
-                                p }}</span>
-                            {% elif p == 1 or p == pagination.total_pages or (p >= pagination.page - 2 and p <=
-                                pagination.page + 2) %} <a href="{{ request.url.include_query_params(page=p) }}"
-                                class="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-white hover:text-indigo-600 transition-all font-medium">
-                                {{ p }}</a>
-                                {% elif p == 2 or p == pagination.total_pages - 1 %}
-                                <span class="px-1 text-slate-300">...</span>
-                                {% endif %}
-                                {% endfor %}
-
-                                <!-- Next Page -->
-                                {% if pagination.has_next %}
-                                <a href="{{ request.url.include_query_params(page=pagination.page + 1) }}"
+                                        <td class="px-6 py-5 text-center">
+                                            {% if real_status %}
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200 shadow-sm">
+                                                {{ real_status }}
+                                            </span>
+                                            {% else %}
+                                            <span class="text-slate-300 text-[10px] font-bold italic">---</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination -->
+                        <div
+                            class="px-8 py-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 bg-slate-50/30 shrink-0">
+                            <span class="font-medium">Hiển thị từ {{ (pagination.page - 1) * pagination.limit + 1 }} đến
+                                {{
+                                [pagination.page * pagination.limit, pagination.total_count]|min }} trong tổng số {{
+                                pagination.total_count }} kết quả</span>
+                            <div class="flex items-center gap-1">
+                                <!-- Prev Page -->
+                                {% if pagination.has_prev %}
+                                <a href="{{ request.url.include_query_params(page=pagination.page - 1) }}"
                                     class="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-white hover:text-indigo-600 transition-all">
-                                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                                    <span class="material-symbols-outlined text-sm">chevron_left</span>
                                 </a>
                                 {% endif %}
+
+                                <!-- Page Numbers -->
+                                {% for p in range(1, pagination.total_pages + 1) %}
+                                {% if p == pagination.page %}
+                                <span
+                                    class="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-lg font-bold shadow-md shadow-indigo-100">{{
+                                    p }}</span>
+                                {% elif p == 1 or p == pagination.total_pages or (p >= pagination.page - 2 and p <=
+                                    pagination.page + 2) %} <a href="{{ request.url.include_query_params(page=p) }}"
+                                    class="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-white hover:text-indigo-600 transition-all font-medium">
+                                    {{ p }}</a>
+                                    {% elif p == 2 or p == pagination.total_pages - 1 %}
+                                    <span class="px-1 text-slate-300">...</span>
+                                    {% endif %}
+                                    {% endfor %}
+
+                                    <!-- Next Page -->
+                                    {% if pagination.has_next %}
+                                    <a href="{{ request.url.include_query_params(page=pagination.page + 1) }}"
+                                        class="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-white hover:text-indigo-600 transition-all">
+                                        <span class="material-symbols-outlined text-sm">chevron_right</span>
+                                    </a>
+                                    {% endif %}
+                            </div>
                         </div>
-                    </div>
                 </section>
             </div>
         </div>
@@ -718,7 +1014,7 @@
                             placeholder="Nhập mã hàng vải" type="text" />
                     </div>
                     <div class="space-y-1">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Số
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">S?
                             SER</label>
                         <input name="ser_no"
                             class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent focus:bg-white outline-none transition-all"
@@ -740,14 +1036,14 @@
                     </div>
                     <div class="space-y-1">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nhà
-                            cung cấp</label>
+                            cung c?p</label>
                         <input name="fg_supplier"
                             class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent focus:bg-white outline-none transition-all"
                             placeholder="Tên nhà cung cấp" type="text" />
                     </div>
                     <div class="space-y-1">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Ngày dự
-                            kiến về</label>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Ngày d?
+                            ki?n v?</label>
                         <input name="expected_arrival_date"
                             class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent focus:bg-white outline-none transition-all"
                             placeholder="DD/MM/YYYY" type="text" />
@@ -758,8 +1054,8 @@
                 <button type="button" onclick="closeModal()"
                     class="px-6 py-3 text-sm font-bold text-slate-600 hover:text-slate-800 transition-colors">Hủy</button>
                 <button type="submit" form="requestForm"
-                    class="px-8 py-3 bg-accent text-white rounded-2xl text-sm font-bold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20">Tạo
-                    yêu cầu</button>
+                    class="px-8 py-3 bg-accent text-white rounded-2xl text-sm font-bold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20">T?o
+                    yêu c?u</button>
             </div>
         </div>
     </div>
@@ -784,7 +1080,8 @@
                     <div>
                         <h2 class="text-2xl font-black text-slate-800 tracking-tight">Quản lý Master 1st Lot</h2>
                         <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mã hàng:</span>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Item
+                                Code:</span>
                             <span id="modalDisplayItemCode"
                                 class="text-xs font-black text-accent bg-accent/5 px-2 py-0.5 rounded-md">---</span>
                         </div>
@@ -797,12 +1094,13 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-10 custom-scrollbar">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div class="grid grid-cols-1 {% if user.role != 'QA' %}lg:grid-cols-2{% endif %} gap-10">
                     <!-- Form Area -->
                     <div class="space-y-8">
                         <div class="flex items-center gap-3">
-                            <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Thông tin &
-                                Trạng thái</h4>
+                            <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest">
+                                {% if user.role == 'QA' %}Chất lượng 1st Lot{% else %}Thông tin & Trạng thái{% endif %}
+                            </h4>
                             <div class="h-px flex-1 bg-slate-100"></div>
                         </div>
                         <form id="masterForm" class="space-y-6">
@@ -817,6 +1115,7 @@
                             <input type="hidden" id="formColor" name="color">
                             <input type="hidden" id="formDescription" name="description">
 
+                            {% if user.role != 'QA' %}
                             <div class="space-y-2.5">
                                 <label
                                     class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Ngày
@@ -831,8 +1130,8 @@
 
                             <div class="space-y-2.5">
                                 <label
-                                    class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Color
-                                    Test Date</label>
+                                    class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Ngày
+                                    nhận Color Test Report</label>
                                 <div class="relative group">
                                     <span
                                         class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-accent">lab_profile</span>
@@ -844,8 +1143,8 @@
 
                             <div class="space-y-2.5">
                                 <label
-                                    class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">MTSR
-                                    Received Date</label>
+                                    class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Ngày
+                                    nhận MTSR</label>
                                 <div class="relative group">
                                     <span
                                         class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-accent">verified_user</span>
@@ -865,6 +1164,7 @@
                                         <option value="NOK">NOK - Sai sót</option>
                                     </select>
                                 </div>
+                                {% if user.role != 'MD' %}
                                 <div class="space-y-2.5">
                                     <label
                                         class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Chất
@@ -876,6 +1176,7 @@
                                         <option value="NOK">NOK - Không đạt</option>
                                     </select>
                                 </div>
+                                {% endif %}
                             </div>
 
                             <div class="space-y-2.5">
@@ -890,37 +1191,45 @@
                                 </select>
                             </div>
 
-                            <div class="space-y-2.5">
-                                <label
-                                    class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Thông
-                                    tin bổ sung</label>
-                                <textarea id="remark" name="remark" placeholder="Nhập cập nhật tình trạng mới nhất..."
-                                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm focus:ring-4 focus:ring-accent/5 focus:border-accent outline-none transition-all min-h-[60px]"></textarea>
-                            </div>
-
                             <div id="info_reason_container" class="space-y-2.5 hidden">
                                 <label class="text-[10px] font-extrabold text-red-500 uppercase tracking-widest ml-1">Lý
                                     do (Thông tin)</label>
                                 <textarea id="lot_info_reason" name="lot_info_reason"
                                     class="w-full bg-red-50/30 border border-red-100 rounded-2xl px-5 py-4 text-sm outline-none min-h-[80px]"></textarea>
                             </div>
+                            {% else %}
+                            <div class="space-y-2.5">
+                                <label
+                                    class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Chất
+                                    lượng 1st Lot</label>
+                                <select id="lot_quality_status" name="lot_quality_status"
+                                    onchange="toggleReason('quality')"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-sm focus:ring-4 focus:ring-accent/5 focus:border-accent outline-none transition-all font-bold text-slate-700">
+                                    <option value="OK">OK - Đạt</option>
+                                    <option value="NOK">NOK - Không đạt</option>
+                                </select>
+                            </div>
+                            {% endif %}
 
+                            {% if user.role != 'MD' %}
                             <div id="quality_reason_container" class="space-y-2.5 hidden">
                                 <label class="text-[10px] font-extrabold text-red-500 uppercase tracking-widest ml-1">Lý
                                     do (Chất lượng)</label>
                                 <textarea id="lot_quality_reason" name="lot_quality_reason"
                                     class="w-full bg-red-50/30 border border-red-100 rounded-2xl px-5 py-4 text-sm outline-none min-h-[80px]"></textarea>
                             </div>
+                            {% endif %}
 
                             <button type="submit"
                                 class="w-full py-5 bg-accent text-white rounded-2xl font-extrabold text-sm shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-3">
                                 <span class="material-symbols-outlined text-lg">save</span>
-                                Cập nhật Master
+                                Lưu
                             </button>
                         </form>
                     </div>
 
                     <!-- History Area -->
+                    {% if user.role != 'QA' %}
                     <div class="bg-slate-50 rounded-[2.5rem] p-8 border border-slate-100 flex flex-col min-h-[400px]">
                         <div class="flex items-center justify-between mb-8">
                             <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Nhật ký thay đổi
@@ -931,6 +1240,7 @@
                             <!-- Items will be injected -->
                         </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -980,6 +1290,29 @@
 
         document.addEventListener("DOMContentLoaded", initTheme);
 
+        function initNotifications() {
+            const btn = document.getElementById("notiButton");
+            const dropdown = document.getElementById("notiDropdown");
+            if (!btn || !dropdown) return;
+
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle("hidden");
+            });
+
+            dropdown.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+
+            document.addEventListener("click", () => {
+                if (!dropdown.classList.contains("hidden")) {
+                    dropdown.classList.add("hidden");
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", initNotifications);
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('collapsed');
@@ -1019,7 +1352,11 @@
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 const season = document.getElementById('filter-season').value;
+                const iman = document.getElementById('filter-iman') ? document.getElementById('filter-iman').value : '';
                 const model = document.getElementById('filter-model').value;
+                const supplier = document.getElementById('filter-supplier').value;
+                const qualityStatus = document.getElementById('filter-quality-status') ? document.getElementById('filter-quality-status').value : '';
+                const receivedStatus = document.getElementById('filter-received-status') ? document.getElementById('filter-received-status').value : '';
                 const item = document.getElementById('filter-item').value;
 
                 const statusCheckboxes = document.querySelectorAll('.status-checkbox:checked');
@@ -1033,8 +1370,12 @@
 
                 const params = new URLSearchParams(window.location.search);
                 if (season) params.set('season', season); else params.delete('season');
+                if (iman) params.set('fg_cc_code', iman); else params.delete('fg_cc_code');
                 if (model) params.set('model_description', model); else params.delete('model_description');
+                if (supplier) params.set('supplier_name', supplier); else params.delete('supplier_name');
                 if (item) params.set('item_code', item); else params.delete('item_code');
+                if (qualityStatus) params.set('quality_status', qualityStatus); else params.delete('quality_status');
+                if (receivedStatus) params.set('received_status', receivedStatus); else params.delete('received_status');
 
                 // Clear and re-add multi-select filters
                 params.delete('status');
@@ -1070,8 +1411,16 @@
         }
 
         document.getElementById('filter-season').addEventListener('input', updateFilters);
+        if (document.getElementById('filter-iman')) {
+            document.getElementById('filter-iman').addEventListener('input', updateFilters);
+        }
         document.getElementById('filter-model').addEventListener('input', updateFilters);
+        document.getElementById('filter-supplier').addEventListener('input', updateFilters);
         document.getElementById('filter-item').addEventListener('input', updateFilters);
+        const qualityFilter = document.getElementById('filter-quality-status');
+        const receivedFilter = document.getElementById('filter-received-status');
+        if (qualityFilter) qualityFilter.addEventListener('change', updateFilters);
+        if (receivedFilter) receivedFilter.addEventListener('change', updateFilters);
         document.querySelectorAll('.status-checkbox').forEach(cb => cb.addEventListener('change', updateFilters));
         document.querySelectorAll('.sample-type-checkbox').forEach(cb => cb.addEventListener('change', updateFilters));
 
@@ -1136,27 +1485,33 @@
             const displayCode = document.getElementById('modalDisplayItemCode');
 
             displayCode.innerText = itemCode;
-            document.getElementById('formItemCode').value = itemCode;
-            document.getElementById('formRequestId').value = requestId || '';
-            document.getElementById('received_status').value = receivedStatus || '';
-            document.getElementById('remark').value = remark || '';
+            const setValueIfExists = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.value = value;
+            };
+
+            setValueIfExists('formItemCode', itemCode);
+            setValueIfExists('formRequestId', requestId || '');
+            setValueIfExists('received_status', receivedStatus || '');
+            const remarkField = document.getElementById('remark');
+            if (remarkField) remarkField.value = remark || '';
 
             // Set basic pre-fill info (will be overwritten if master exists on server)
-            document.getElementById('formFabricName').value = fabricName;
-            document.getElementById('formModelCode').value = modelCode;
-            document.getElementById('formFabricSupplier').value = fabricSupplier;
-            document.getElementById('formUnit').value = unit || 'M';
-            document.getElementById('formColor').value = color;
-            document.getElementById('formDescription').value = description;
+            setValueIfExists('formFabricName', fabricName);
+            setValueIfExists('formModelCode', modelCode);
+            setValueIfExists('formFabricSupplier', fabricSupplier);
+            setValueIfExists('formUnit', unit || 'M');
+            setValueIfExists('formColor', color);
+            setValueIfExists('formDescription', description);
 
             // Reset form fields
-            document.getElementById('received_date').value = '';
-            document.getElementById('color_test_report_received_date').value = '';
-            document.getElementById('mtsr_received_date').value = '';
-            document.getElementById('lot_info_status').value = 'OK';
-            document.getElementById('lot_quality_status').value = 'OK';
-            document.getElementById('lot_info_reason').value = '';
-            document.getElementById('lot_quality_reason').value = '';
+            setValueIfExists('received_date', '');
+            setValueIfExists('color_test_report_received_date', '');
+            setValueIfExists('mtsr_received_date', '');
+            setValueIfExists('lot_info_status', 'OK');
+            setValueIfExists('lot_quality_status', 'OK');
+            setValueIfExists('lot_info_reason', '');
+            setValueIfExists('lot_quality_reason', '');
 
             // Try to fetch existing master data with item_code and supplier_name
             try {
@@ -1164,24 +1519,24 @@
                 if (response.ok) {
                     const data = await response.json();
                     if (data) {
-                        if (data.received_date) document.getElementById('received_date').value = data.received_date;
-                        if (data.color_test_report_received_date) document.getElementById('color_test_report_received_date').value = data.color_test_report_received_date;
-                        if (data.mtsr_received_date) document.getElementById('mtsr_received_date').value = data.mtsr_received_date;
+                        if (data.received_date) setValueIfExists('received_date', data.received_date);
+                        if (data.color_test_report_received_date) setValueIfExists('color_test_report_received_date', data.color_test_report_received_date);
+                        if (data.mtsr_received_date) setValueIfExists('mtsr_received_date', data.mtsr_received_date);
 
-                        document.getElementById('lot_info_status').value = data.lot_info_status || 'OK';
-                        document.getElementById('lot_info_reason').value = data.lot_info_reason || '';
-                        document.getElementById('lot_quality_status').value = data.lot_quality_status || 'OK';
-                        document.getElementById('lot_quality_reason').value = data.lot_quality_reason || '';
+                        setValueIfExists('lot_info_status', data.lot_info_status || 'OK');
+                        setValueIfExists('lot_info_reason', data.lot_info_reason || '');
+                        setValueIfExists('lot_quality_status', data.lot_quality_status || 'OK');
+                        setValueIfExists('lot_quality_reason', data.lot_quality_reason || '');
 
-                        if (data.fabric_name) document.getElementById('formFabricName').value = data.fabric_name;
+                        if (data.fabric_name) setValueIfExists('formFabricName', data.fabric_name);
                     }
                 }
             } catch (error) {
                 console.error("Error fetching master data:", error);
             }
 
-            toggleReason('info');
-            toggleReason('quality');
+            if (document.getElementById('lot_info_status')) toggleReason('info');
+            if (document.getElementById('lot_quality_status')) toggleReason('quality');
 
             modal.classList.remove('hidden');
             setTimeout(() => {
@@ -1191,7 +1546,9 @@
                 content.classList.add('translate-x-0');
             }, 10);
 
-            fetchHistory(itemCode, fabricSupplier);
+            if (document.getElementById('historyTimeline')) {
+                fetchHistory(itemCode, fabricSupplier);
+            }
         }
 
         function toggleReason(type) {
@@ -1312,6 +1669,118 @@
                 term.innerText = originalText;
             }
         }
+
+        async function sendTimeoutEmailRow(serNo, btn) {
+            if (!serNo) return;
+            if (!confirm(`Bạn có muốn gửi riêng Email đến ${serNo}?`)) return;
+
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            try {
+                const response = await fetch('/api/send-email-timeout-row', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ser_no: serNo })
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Gửi lại email thành công.');
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + (result.detail || result.message || 'Không xác định'));
+                }
+            } catch (e) {
+                alert('Lỗi kết nối server');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        function _getSelectedSerNos() {
+            return Array.from(document.querySelectorAll('.row-merge-checkbox:checked'))
+                .map(cb => cb.getAttribute('data-ser-no'))
+                .filter(Boolean);
+        }
+
+        function updateMergeSendUi() {
+            const serNos = _getSelectedSerNos();
+            const btn = document.getElementById('mergeSendButton');
+            const countEl = document.getElementById('mergeSendCount');
+            if (countEl) countEl.textContent = String(serNos.length);
+            if (btn) btn.disabled = serNos.length === 0;
+
+            const selectAll = document.getElementById('selectAllRows');
+            if (selectAll) {
+                const all = Array.from(document.querySelectorAll('.row-merge-checkbox'));
+                const checked = Array.from(document.querySelectorAll('.row-merge-checkbox:checked'));
+                selectAll.checked = all.length > 0 && checked.length === all.length;
+                selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+            }
+        }
+
+        async function sendMergedMissingFirstLotEmails() {
+            const serNos = _getSelectedSerNos();
+            if (serNos.length === 0) return;
+            if (!confirm(`Gộp gửi FOLLOW UP Missing 1st lot cho ${serNos.length} dòng đã chọn?`)) return;
+
+            const btn = document.getElementById('mergeSendButton');
+            const originalLabel = btn ? btn.innerText : null;
+
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.innerText = 'Đang gửi...';
+            }
+
+            try {
+                const response = await fetch('/api/send-email-missing-1stlot-rows', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ser_nos: serNos })
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    const skipped = Array.isArray(result.skipped_rows) ? result.skipped_rows.length : 0;
+                    const skippedText = skipped > 0 ? ` (bỏ qua ${skipped} dòng)` : '';
+                    alert(`Thành công! Đã gửi ${result.sent_suppliers} email (${result.rows_total} dòng).${skippedText}`);
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + (result.detail || result.message || 'Không xác định'));
+                }
+            } catch (e) {
+                alert('Lỗi kết nối server');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    if (originalLabel) btn.innerText = originalLabel;
+                }
+                updateMergeSendUi();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const selectAll = document.getElementById('selectAllRows');
+            if (selectAll) {
+                selectAll.addEventListener('change', (e) => {
+                    const isChecked = !!e.target.checked;
+                    document.querySelectorAll('.row-merge-checkbox').forEach(cb => { cb.checked = isChecked; });
+                    updateMergeSendUi();
+                });
+            }
+            document.querySelectorAll('.row-merge-checkbox').forEach(cb => {
+                cb.addEventListener('change', updateMergeSendUi);
+            });
+            updateMergeSendUi();
+        });
 
     </script>
 </body>

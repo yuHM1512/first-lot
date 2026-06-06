@@ -29,6 +29,11 @@ def migrate():
         if not cur.fetchone():
             print("Adding resend_count...")
             cur.execute("ALTER TABLE first_lot_requests ADD COLUMN resend_count INTEGER DEFAULT 0;")
+        
+        cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='email_log' AND column_name='first_lot_received_status'")
+        if cur.fetchone():
+            print("Dropping first_lot_received_status from email_log...")
+            cur.execute("ALTER TABLE email_log DROP COLUMN first_lot_received_status;")
             
         conn.commit()
         print("Migration complete!")

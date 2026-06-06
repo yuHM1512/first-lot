@@ -1,0 +1,961 @@
+{% set criteria = dashboard.criteria_columns %}
+{% set summary = dashboard.summary %}
+<!DOCTYPE html>
+<html lang="vi" data-theme="light" data-density="regular">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Đánh giá Nhà cung ứng · Rank 2 · {{ dashboard.year }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Noto+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --ui-font: "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+            --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
+            --display: "Noto Sans", system-ui, sans-serif;
+            --value-font: "Manrope", "Noto Sans", system-ui, sans-serif;
+            --accent: #2563eb;
+        }
+
+        /* ---------- LIGHT ---------- */
+        :root[data-theme="light"] {
+            --bg: #eef1f6;
+            --surface: #ffffff;
+            --surface-2: #f7f9fc;
+            --ink: #101725;
+            --ink-2: #41506a;
+            --ink-3: #8593aa;
+            --hair: #e7ebf2;
+            --border: #e2e7f0;
+            --bar-track: #eef1f7;
+            --ring-track: #edf0f6;
+            --shadow: 0 1px 2px rgba(16, 23, 37, .04), 0 8px 24px -12px rgba(16, 23, 37, .12);
+            --shadow-lg: 0 24px 70px -24px rgba(16, 23, 37, .34);
+            --pos: #1f9d57;
+            --neg: #dc4f4f;
+            --g-a: #1f9d57;
+            --g-b: #2563eb;
+            --g-c: #d9912b;
+            --g-d: #dc4f4f;
+            --m-qty: #e2683a;
+            --m-qual: #2563eb;
+            --m-time: #1f9d57;
+        }
+
+        /* ---------- DARK ---------- */
+        :root[data-theme="dark"] {
+            --bg: #0c1018;
+            --surface: #141a26;
+            --surface-2: #1a2130;
+            --ink: #eef2f8;
+            --ink-2: #aab6cc;
+            --ink-3: #6c7a93;
+            --hair: #222b3b;
+            --border: #273048;
+            --bar-track: #222c3e;
+            --ring-track: #222c3e;
+            --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px -14px rgba(0, 0, 0, .7);
+            --shadow-lg: 0 30px 80px -28px rgba(0, 0, 0, .8);
+            --pos: #34c97e;
+            --neg: #f0696a;
+            --g-a: #34c97e;
+            --g-b: #4f8cf0;
+            --g-c: #e2a948;
+            --g-d: #f0696a;
+            --m-qty: #f0814f;
+            --m-qual: #4f8cf0;
+            --m-time: #34c97e;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            font-family: var(--ui-font);
+            background: var(--bg);
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+        a { color: inherit; text-decoration: none; }
+        .mono { font-family: var(--mono); font-feature-settings: "tnum" 1; }
+        .display { font-family: var(--display); }
+        button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+        input { font-family: inherit; }
+
+        /* density */
+        :root { --gap: 18px; --pad: 20px; --row-h: 46px; }
+        :root[data-density="compact"] { --gap: 12px; --pad: 14px; --row-h: 38px; }
+        :root[data-density="comfy"] { --gap: 24px; --pad: 26px; --row-h: 54px; }
+
+        .app {
+            max-width: 1480px;
+            margin: 0 auto;
+            padding: var(--gap) clamp(16px, 3vw, 34px) 60px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--gap);
+        }
+
+        /* ---------- header ---------- */
+        .hdr { display: flex; align-items: center; justify-content: space-between; padding-top: 6px; gap: 16px; flex-wrap: wrap; }
+        .hdr-brand { display: flex; align-items: center; gap: 13px; }
+        .hdr-mark {
+            width: 42px; height: 42px; border-radius: 12px;
+            display: grid; place-items: center;
+            background: linear-gradient(150deg, var(--accent), color-mix(in oklab, var(--accent) 60%, #000 12%));
+            color: #fff;
+            box-shadow: 0 6px 16px -6px color-mix(in oklab, var(--accent) 60%, transparent);
+            font-family: var(--mono); font-weight: 700; font-size: 16px; letter-spacing: -.02em;
+        }
+        .hdr-title { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+        .hdr-sub { font-size: 12px; color: var(--ink-3); font-family: var(--mono); letter-spacing: .02em; margin-top: 1px; }
+        .hdr-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+        .seg { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 3px; box-shadow: var(--shadow); }
+        .seg-btn { padding: 6px 14px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--ink-3); font-family: var(--mono); }
+        .seg-btn.on { background: var(--accent); color: #fff; }
+
+        .btn-ghost {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 8px 14px; border-radius: 10px;
+            font-size: 13px; font-weight: 600;
+            color: var(--ink-2);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .btn-ghost:hover { color: var(--ink); border-color: var(--ink-3); }
+        .btn-ghost .material-symbols-outlined { font-size: 18px; }
+
+        /* ---------- cards ---------- */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: var(--pad);
+            box-shadow: var(--shadow);
+        }
+        .card-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+        .card-h { font-size: 16px; font-weight: 700; margin-top: 3px; letter-spacing: -.01em; }
+        .card-h.sm { font-size: 14px; }
+        .card-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+        .card-head.tight { margin-bottom: 12px; align-items: center; }
+        .muted-sm { font-size: 12px; color: var(--ink-3); }
+
+        /* ---------- filter bar ---------- */
+        .filterbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .search {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 11px;
+            padding: 0 12px; height: 42px; min-width: 248px;
+            color: var(--ink-3); box-shadow: var(--shadow);
+        }
+        .search:focus-within { border-color: var(--accent); color: var(--accent); }
+        .search input { border: none; outline: none; background: none; color: var(--ink); font-size: 14px; width: 100%; }
+        .search-x { display: grid; place-items: center; color: var(--ink-3); }
+        .search-x:hover { color: var(--ink); }
+
+        .dd { position: relative; }
+        .dd-btn {
+            display: flex; align-items: center; gap: 9px; height: 42px; padding: 0 13px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 11px;
+            box-shadow: var(--shadow); color: var(--ink-2);
+        }
+        .dd-btn:hover, .dd-btn.open { border-color: var(--accent); }
+        .dd-label { font-size: 11px; color: var(--ink-3); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+        .dd-val { font-size: 14px; font-weight: 600; color: var(--ink); }
+        .dd-btn .material-symbols-outlined { font-size: 16px; color: var(--ink-3); }
+        .dd-menu {
+            position: absolute; top: 48px; left: 0; z-index: 30;
+            min-width: 180px; max-height: 300px; overflow: auto;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            box-shadow: var(--shadow-lg); padding: 6px;
+            display: none;
+        }
+        .dd.open .dd-menu { display: block; }
+        .dd-opt {
+            display: flex; align-items: center; justify-content: space-between; width: 100%;
+            padding: 8px 10px; border-radius: 8px; font-size: 13.5px; color: var(--ink-2);
+            text-align: left;
+        }
+        .dd-opt:hover { background: var(--surface-2); color: var(--ink); }
+        .dd-opt.on { color: var(--accent); font-weight: 600; }
+
+        .grade-pills { display: flex; gap: 6px; }
+        .gpill {
+            padding: 8px 12px; border-radius: 9px; font-size: 12.5px; font-weight: 600;
+            color: var(--ink-3); border: 1px solid var(--border); background: var(--surface);
+            box-shadow: var(--shadow);
+        }
+        .gpill:hover { color: var(--ink-2); }
+        .gpill.on { color: #fff; background: var(--accent); border-color: var(--accent); }
+        .gpill[data-grade="A"].on { background: var(--g-a); border-color: var(--g-a); }
+        .gpill[data-grade="B"].on { background: var(--g-b); border-color: var(--g-b); }
+        .gpill[data-grade="C"].on { background: var(--g-c); border-color: var(--g-c); }
+        .gpill[data-grade="D"].on { background: var(--g-d); border-color: var(--g-d); }
+
+        .filter-count { margin-left: auto; font-size: 13px; color: var(--ink-3); font-family: var(--mono); }
+        .filter-count b { color: var(--ink); font-weight: 600; }
+
+        /* ---------- kpi row ---------- */
+        .kpi-row { display: grid; grid-template-columns: 1.35fr repeat({{ criteria|length }}, 1fr); gap: var(--gap); }
+        .kpi-grade { display: flex; flex-direction: column; }
+        .grade-big { display: flex; align-items: baseline; gap: 9px; margin: 9px 0 14px; }
+        .score-xl { font-size: 38px; font-weight: 700; letter-spacing: -.03em; line-height: 1; color: var(--ink); font-family: var(--value-font); font-variant-numeric: tabular-nums lining-nums; }
+        .score-unit { font-size: 12px; color: var(--ink-3); }
+        .grade-stack { display: flex; height: 11px; border-radius: 99px; overflow: hidden; gap: 2px; background: var(--bar-track); }
+        .grade-stack > div { transition: width .8s cubic-bezier(.22, 1, .36, 1); min-width: 3px; }
+        .grade-stack .seg-a { background: var(--g-a); }
+        .grade-stack .seg-b { background: var(--g-b); }
+        .grade-stack .seg-c { background: var(--g-c); }
+        .grade-stack .seg-d { background: var(--g-d); }
+        .grade-legend { display: flex; gap: 16px; margin-top: 13px; flex-wrap: wrap; }
+        .gl-item { display: flex; align-items: center; gap: 6px; }
+        .gl-dot { width: 9px; height: 9px; border-radius: 3px; }
+        .gl-dot.a { background: var(--g-a); }
+        .gl-dot.b { background: var(--g-b); }
+        .gl-dot.c { background: var(--g-c); }
+        .gl-dot.d { background: var(--g-d); }
+        .gl-g { font-size: 12px; color: var(--ink-3); font-weight: 600; }
+        .gl-n { font-size: 14px; color: var(--ink); font-weight: 600; }
+
+        .kpi-metric { display: flex; flex-direction: column; justify-content: space-between; }
+        .km-top { display: flex; align-items: center; gap: 9px; }
+        .km-icon { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; color: #fff; }
+        .km-icon .material-symbols-outlined { font-size: 18px; }
+        .km-icon.qty { background: var(--m-qty); }
+        .km-icon.qual { background: var(--m-qual); }
+        .km-icon.time { background: var(--m-time); }
+        .km-label { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+        .km-val { margin: 12px 0 4px; display: flex; align-items: baseline; }
+        .km-val .mono { font-size: 33px; font-weight: 700; letter-spacing: -.03em; color: var(--ink); font-family: var(--value-font); font-variant-numeric: tabular-nums lining-nums; }
+        .km-pct { font-size: 16px; color: var(--ink-3); margin-left: 2px; }
+        .km-top-sub { font-size: 11.5px; color: var(--ink-3); margin-top: auto; padding-top: 12px; line-height: 1.5; }
+        .km-top-sub b { color: var(--ink-2); font-weight: 600; }
+
+        /* ---------- main grid ---------- */
+        .main-grid { display: grid; grid-template-columns: 1fr 320px; gap: var(--gap); align-items: start; }
+        .rail { display: flex; flex-direction: column; gap: var(--gap); }
+
+        /* ---------- table ---------- */
+        .table-card { padding-bottom: 8px; }
+        .table-scroll { max-height: 620px; overflow: auto; margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1); padding: 0 6px; }
+        .rk-table { width: 100%; border-collapse: collapse; }
+        .rk-table thead th {
+            position: sticky; top: 0; z-index: 5;
+            background: var(--surface);
+            font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3);
+            padding: 8px 12px 11px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            white-space: nowrap;
+        }
+        .rk-table thead th.num { text-align: right; }
+        .rk-table thead th.center { text-align: center; }
+        .th-sort { cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 5px; }
+        .th-sort:hover { color: var(--ink-2); }
+        .th-ar { font-size: 9px; opacity: .4; font-style: normal; }
+        .th-ar.on { opacity: 1; color: var(--accent); }
+
+        .rk-table tbody tr { cursor: pointer; transition: background .12s; }
+        .rk-table tbody tr:hover { background: var(--surface-2); }
+        .rk-table tbody tr.sel { background: color-mix(in oklab, var(--accent) 8%, transparent); }
+        .rk-table tbody td {
+            padding: 0 12px; height: var(--row-h);
+            border-bottom: 1px solid var(--hair);
+            font-size: 13.5px; vertical-align: middle;
+        }
+        .td-rank { color: var(--ink-3); font-size: 12px; font-family: var(--mono); width: 36px; }
+        .td-name { display: flex; flex-direction: column; gap: 0; }
+        .td-name .nm { font-weight: 600; color: var(--ink); font-size: 13.5px; }
+        .td-name .cust { font-size: 11px; color: var(--ink-3); }
+        .num-cell { text-align: right; font-family: var(--value-font); font-variant-numeric: tabular-nums lining-nums; color: var(--ink-2); font-size: 13px; font-weight: 600; letter-spacing: -.01em; }
+        .num-cell.empty { color: var(--ink-3); }
+        .td-score { text-align: right; }
+        .td-score .sc { font-size: 16px; font-weight: 700; color: var(--ink); font-family: var(--value-font); font-variant-numeric: tabular-nums lining-nums; letter-spacing: -.02em; }
+        .td-grade { text-align: center; }
+        .grade-chip {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 30px; height: 24px; padding: 0 8px;
+            border-radius: 7px; font-size: 12px; font-weight: 700;
+            color: #fff;
+        }
+        .grade-chip.A { background: var(--g-a); }
+        .grade-chip.B { background: var(--g-b); }
+        .grade-chip.C { background: var(--g-c); }
+        .grade-chip.D { background: var(--g-d); }
+        .empty-row { text-align: center; color: var(--ink-3); padding: 40px 0; font-size: 13px; }
+
+        /* ---------- risk rail ---------- */
+        .card-eyebrow.risk { display: inline-flex; align-items: center; gap: 6px; color: var(--g-d); }
+        .card-eyebrow.risk .material-symbols-outlined { font-size: 14px; }
+        .risk-list { display: flex; flex-direction: column; gap: 4px; }
+        .risk-item {
+            display: flex; align-items: center; gap: 11px;
+            padding: 9px 8px; border-radius: 10px;
+            text-align: left; width: 100%; transition: background .12s;
+        }
+        .risk-item:hover { background: var(--surface-2); }
+        .ri-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .ri-nm { font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ri-sub { font-size: 11px; color: var(--ink-3); }
+        .ri-right { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+        .ri-sc { font-size: 14px; font-weight: 700; color: var(--ink); font-family: var(--value-font); font-variant-numeric: tabular-nums lining-nums; }
+        .risk-ok { display: flex; align-items: center; gap: 8px; color: var(--pos); font-size: 13px; padding: 8px 4px; }
+
+        .source-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+        .source-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--surface-2); border-radius: 10px; border: 1px solid var(--border); }
+        .source-item .lbl { font-size: 12px; color: var(--ink-3); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+        .source-item .val { font-size: 13px; color: var(--ink); font-family: var(--mono); font-weight: 600; }
+
+        .threshold-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+        .th-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+        .th-row .range { font-size: 13px; font-weight: 600; color: var(--ink); font-family: var(--mono); }
+        .th-row .lab { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+
+        /* ---------- drawer ---------- */
+        .drawer-wrap { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+        .drawer-scrim { position: absolute; inset: 0; background: rgba(8, 12, 20, .42); opacity: 0; transition: opacity .3s; backdrop-filter: blur(1.5px); }
+        .drawer {
+            position: absolute; top: 0; right: 0; height: 100%;
+            width: 444px; max-width: 92vw;
+            background: var(--surface); border-left: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            transform: translateX(100%); transition: transform .36s cubic-bezier(.22, 1, .36, 1);
+            display: flex; flex-direction: column; padding: 24px; gap: 18px; overflow-y: auto;
+        }
+        .drawer-wrap.open { pointer-events: auto; }
+        .drawer-wrap.open .drawer-scrim { opacity: 1; }
+        .drawer-wrap.open .drawer { transform: translateX(0); }
+        .dr-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+        .dr-head-l { display: flex; gap: 14px; align-items: center; }
+        .dr-name { font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+        .dr-cust { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+        .dr-close { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: var(--ink-3); background: var(--surface-2); }
+        .dr-close:hover { color: var(--ink); }
+        .dr-score-band { background: var(--surface-2); border: 1px solid var(--border); border-radius: 13px; padding: 15px 17px; display: flex; flex-direction: column; gap: 11px; }
+        .dr-band-eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); font-weight: 600; }
+        .dr-band-score { display: flex; align-items: baseline; gap: 10px; margin-top: 3px; }
+        .dr-band-score .mono { font-size: 30px; font-weight: 700; letter-spacing: -.03em; font-family: var(--value-font); font-variant-numeric: tabular-nums lining-nums; }
+        .dr-section h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); font-weight: 600; margin: 0 0 10px; }
+        .dr-stats { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .dr-stat { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .ds-left { display: flex; flex-direction: column; gap: 3px; }
+        .ds-l { font-size: 11.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
+        .ds-v { font-size: 19px; font-weight: 700; color: var(--ink); font-family: var(--value-font); font-variant-numeric: tabular-nums lining-nums; letter-spacing: -.02em; }
+        .ds-bar { flex: 1; max-width: 130px; height: 6px; background: var(--bar-track); border-radius: 99px; overflow: hidden; }
+        .ds-bar > span { display: block; height: 100%; border-radius: 99px; }
+
+        /* scrollbars */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-thumb { background: color-mix(in oklab, var(--ink-3) 35%, transparent); border-radius: 99px; border: 3px solid var(--surface); }
+        ::-webkit-scrollbar-track { background: transparent; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 0.9s linear infinite; display: inline-block; }
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 80;
+            background: var(--surface); border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg); border-radius: 12px;
+            padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+            font-size: 13px; max-width: 360px;
+            transform: translateY(20px); opacity: 0; transition: all .24s;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.ok { border-left: 3px solid var(--pos); }
+        .toast.err { border-left: 3px solid var(--neg); }
+        .toast .material-symbols-outlined { font-size: 18px; }
+        .toast.ok .material-symbols-outlined { color: var(--pos); }
+        .toast.err .material-symbols-outlined { color: var(--neg); }
+
+        @media (max-width: 1100px) {
+            .kpi-row { grid-template-columns: 1fr 1fr; }
+            .main-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 680px) {
+            .kpi-row { grid-template-columns: 1fr; }
+            .filter-count { margin-left: 0; }
+        }
+    </style>
+</head>
+
+<body>
+    {% set rank_a = summary.rank_counts['A'] %}
+    {% set rank_b = summary.rank_counts['B'] %}
+    {% set rank_c = summary.rank_counts['C'] %}
+    {% set rank_d = summary.rank_counts['D'] %}
+    {% set total = summary.supplier_count if summary.supplier_count > 0 else 1 %}
+
+    <div class="app">
+
+        <!-- ===== Header ===== -->
+        <header class="hdr">
+            <div class="hdr-brand">
+                <div class="hdr-mark">R2</div>
+                <div>
+                    <div class="hdr-title">Đánh giá Nhà cung ứng</div>
+                    <div class="hdr-sub">CPT · Rank 2 · Sheet {{ dashboard.year }}</div>
+                </div>
+            </div>
+            <div class="hdr-right">
+                <a href="/kpi-dashboard/" class="btn-ghost">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    KPI Dashboard
+                </a>
+                <div class="seg" role="tablist" aria-label="Năm">
+                    {% for year in years %}
+                    <a href="/kpi-dashboard/cpt-rank-2/{{ year }}/?customer={{ dashboard.customer }}"
+                        class="seg-btn {% if year == dashboard.year %}on{% endif %}">{{ year }}</a>
+                    {% endfor %}
+                </div>
+                <button class="btn-ghost" id="refreshBtn" title="Đồng bộ lại từ Google Sheet">
+                    <span class="material-symbols-outlined" id="refreshIcon">sync</span>
+                    <span id="refreshLabel">Đồng bộ</span>
+                </button>
+                <button class="btn-ghost" id="densityBtn" title="Đổi mật độ">
+                    <span class="material-symbols-outlined">density_medium</span>
+                    <span id="densityLabel">Regular</span>
+                </button>
+                <button class="btn-ghost" id="themeBtn" title="Đổi giao diện">
+                    <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ===== Filter bar ===== -->
+        <section class="card" style="padding: 14px var(--pad);">
+            <div class="filterbar">
+                <label class="search">
+                    <span class="material-symbols-outlined" style="font-size:18px;">search</span>
+                    <input id="search" type="text" placeholder="Tìm nhà cung ứng..." autocomplete="off" />
+                    <button type="button" class="search-x" id="searchClear" style="display:none;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+                    </button>
+                </label>
+
+                <div class="dd" id="customerDD">
+                    <button type="button" class="dd-btn" data-toggle>
+                        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:1px;">
+                            <span class="dd-label">Khách hàng</span>
+                            <span class="dd-val">{% for opt in customer_options %}{% if opt.value == dashboard.customer %}{{ opt.label }}{% endif %}{% endfor %}</span>
+                        </div>
+                        <span class="material-symbols-outlined">expand_more</span>
+                    </button>
+                    <div class="dd-menu">
+                        {% for opt in customer_options %}
+                        <a href="/kpi-dashboard/cpt-rank-2/{{ dashboard.year }}/?customer={{ opt.value }}"
+                            class="dd-opt {% if opt.value == dashboard.customer %}on{% endif %}">
+                            {{ opt.label }}
+                            {% if opt.value == dashboard.customer %}
+                            <span class="material-symbols-outlined" style="font-size:16px;">check</span>
+                            {% endif %}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="grade-pills" role="group" aria-label="Lọc theo hạng">
+                    {% for g in ['A','B','C','D'] %}
+                    <button type="button" class="gpill" data-grade="{{ g }}">{{ g }}</button>
+                    {% endfor %}
+                </div>
+
+                <div class="filter-count">
+                    Hiển thị <b id="visibleCount">{{ summary.supplier_count }}</b> / {{ summary.supplier_count }} NCC
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== KPI row ===== -->
+        <section class="kpi-row">
+            <article class="card kpi-grade">
+                <span class="card-eyebrow">Điểm trung bình nhóm</span>
+                <div class="card-h sm">{% for opt in customer_options %}{% if opt.value == dashboard.customer %}{{ opt.label }}{% endif %}{% endfor %} · {{ summary.supplier_count }} NCC</div>
+                <div class="grade-big">
+                    <span class="score-xl">{{ '%.1f'|format(summary.avg_score) }}</span>
+                    <span class="score-unit">%</span>
+                </div>
+                <div class="grade-stack">
+                    <div class="seg-a" style="width: {{ '%.2f'|format(rank_a / total * 100) }}%"></div>
+                    <div class="seg-b" style="width: {{ '%.2f'|format(rank_b / total * 100) }}%"></div>
+                    <div class="seg-c" style="width: {{ '%.2f'|format(rank_c / total * 100) }}%"></div>
+                    <div class="seg-d" style="width: {{ '%.2f'|format(rank_d / total * 100) }}%"></div>
+                </div>
+                <div class="grade-legend">
+                    <div class="gl-item"><span class="gl-dot a"></span><span class="gl-g">A</span><span class="gl-n">{{ rank_a }}</span></div>
+                    <div class="gl-item"><span class="gl-dot b"></span><span class="gl-g">B</span><span class="gl-n">{{ rank_b }}</span></div>
+                    <div class="gl-item"><span class="gl-dot c"></span><span class="gl-g">C</span><span class="gl-n">{{ rank_c }}</span></div>
+                    <div class="gl-item"><span class="gl-dot d"></span><span class="gl-g">D</span><span class="gl-n">{{ rank_d }}</span></div>
+                </div>
+            </article>
+
+            {% for criterion in dashboard.criterion_summary %}
+            {% set cname = criterion.name %}
+            {% if cname == 'Quantity' %}{% set ic = 'qty' %}{% set icon = 'inventory_2' %}
+            {% elif cname == 'Quality' %}{% set ic = 'qual' %}{% set icon = 'verified' %}
+            {% else %}{% set ic = 'time' %}{% set icon = 'schedule' %}{% endif %}
+            <article class="card kpi-metric">
+                <div class="km-top">
+                    <div class="km-icon {{ ic }}"><span class="material-symbols-outlined">{{ icon }}</span></div>
+                    <span class="km-label">{{ cname }}</span>
+                </div>
+                <div class="km-val">
+                    <span class="mono">{{ criterion.avg_display }}</span>
+                    <span class="km-pct"></span>
+                </div>
+                <div class="km-top-sub">
+                    Top: <b>{{ criterion.top_supplier }}</b><br/>
+                    <span class="mono">{{ criterion.top_value }}</span>
+                </div>
+            </article>
+            {% endfor %}
+        </section>
+
+        <!-- ===== Main grid ===== -->
+        <section class="main-grid">
+
+            <!-- ----- Supplier table ----- -->
+            <article class="card table-card">
+                <div class="card-head tight">
+                    <div>
+                        <span class="card-eyebrow">Supplier detail</span>
+                        <div class="card-h">Bảng điểm chi tiết</div>
+                    </div>
+                    <span class="muted-sm mono">{{ dashboard.criteria_columns|join(' · ') }}</span>
+                </div>
+
+                <div class="table-scroll">
+                    <table class="rk-table" id="rkTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th><span class="th-sort" data-sort="name">Nhà cung ứng <i class="th-ar"></i></span></th>
+                                {% for col in dashboard.criteria_columns %}
+                                <th class="num"><span class="th-sort" data-sort="m_{{ loop.index0 }}">{{ col }} <i class="th-ar"></i></span></th>
+                                {% endfor %}
+                                <th class="num"><span class="th-sort on" data-sort="score" data-dir="desc">Score <i class="th-ar on">▼</i></span></th>
+                                <th class="center"><span class="th-sort" data-sort="grade">Rank <i class="th-ar"></i></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="rkBody">
+                            {% for row in dashboard.rows %}
+                            <tr data-name="{{ row.supplier_name|lower }}" data-grade="{{ row.rank }}" data-score="{{ row.score_display|replace('%','')|replace(',','.') }}" data-idx="{{ loop.index0 }}">
+                                <td class="td-rank">{{ loop.index }}</td>
+                                <td>
+                                    <div class="td-name">
+                                        <span class="nm">{{ row.supplier_name }}</span>
+                                        <span class="cust">{{ row.customer }}</span>
+                                    </div>
+                                </td>
+                                {% for col in dashboard.criteria_columns %}
+                                {% set v = row.metrics[col] %}
+                                <td class="num-cell {% if v is none %}empty{% endif %}" data-val="{% if v is not none %}{{ v }}{% endif %}">
+                                    {% if v is not none %}{{ v }}%{% else %}—{% endif %}
+                                </td>
+                                {% endfor %}
+                                <td class="td-score"><span class="sc">{{ row.score_display }}</span></td>
+                                <td class="td-grade"><span class="grade-chip {{ row.rank }}">{{ row.rank }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="{{ dashboard.criteria_columns|length + 4 }}" class="empty-row">
+                                    Không có dữ liệu cho bộ lọc hiện tại.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <!-- ----- Rail ----- -->
+            <aside class="rail">
+
+                <article class="card">
+                    <div class="card-head tight">
+                        <div>
+                            <span class="card-eyebrow risk">
+                                <span class="material-symbols-outlined">warning</span> At risk
+                            </span>
+                            <div class="card-h sm">NCC điểm thấp nhất</div>
+                        </div>
+                    </div>
+                    <div class="risk-list" id="riskList">
+                        {% set ns = namespace(count=0) %}
+                        {% for row in dashboard.rows %}
+                            {% if row.rank in ['C','D'] and ns.count < 6 %}
+                            {% set ns.count = ns.count + 1 %}
+                            <button type="button" class="risk-item" data-idx="{{ loop.index0 }}">
+                                <span class="grade-chip {{ row.rank }}">{{ row.rank }}</span>
+                                <div class="ri-mid">
+                                    <span class="ri-nm">{{ row.supplier_name }}</span>
+                                    <span class="ri-sub">{{ row.customer }}</span>
+                                </div>
+                                <div class="ri-right">
+                                    <span class="ri-sc">{{ row.score_display }}</span>
+                                </div>
+                            </button>
+                            {% endif %}
+                        {% endfor %}
+                        {% if ns.count == 0 %}
+                        <div class="risk-ok">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Không có NCC nào ở mức C/D
+                        </div>
+                        {% endif %}
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-head tight">
+                        <div>
+                            <span class="card-eyebrow">Rank thresholds</span>
+                            <div class="card-h sm">Mốc ABCD</div>
+                        </div>
+                    </div>
+                    <div class="threshold-list">
+                        {% for item in dashboard.thresholds %}
+                        <div class="th-row">
+                            <div>
+                                <div class="range">{{ '%.0f'|format(item.from) }}% – {{ '%.0f'|format(item.to) }}%</div>
+                                <div class="lab">Score range</div>
+                            </div>
+                            <span class="grade-chip {{ item.rank }}">{{ item.rank }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-head tight">
+                        <div>
+                            <span class="card-eyebrow">Source</span>
+                            <div class="card-h sm">Nguồn dữ liệu</div>
+                        </div>
+                    </div>
+                    <div class="source-list">
+                        <div class="source-item">
+                            <span class="lbl">Workbook</span>
+                            <span class="val">CPT RANK2</span>
+                        </div>
+                        <div class="source-item">
+                            <span class="lbl">Sheet</span>
+                            <span class="val">{{ dashboard.year }}</span>
+                        </div>
+                        <div class="source-item">
+                            <span class="lbl">Thresholds</span>
+                            <span class="val">chi_tieu</span>
+                        </div>
+                        <div class="source-item">
+                            <span class="lbl">Cập nhật gần nhất</span>
+                            <span class="val mono" id="lastSyncVal">
+                                {% if dashboard.last_synced_at %}{{ dashboard.last_synced_at[:16]|replace('T',' ') }}{% else %}—{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </article>
+
+            </aside>
+        </section>
+    </div>
+
+    <!-- ===== Drawer ===== -->
+    <div class="drawer-wrap" id="drawer">
+        <div class="drawer-scrim" data-close></div>
+        <aside class="drawer" role="dialog" aria-modal="true">
+            <div class="dr-head">
+                <div class="dr-head-l">
+                    <span class="grade-chip" id="drGrade" style="width:46px;height:46px;font-size:18px;border-radius:12px;">—</span>
+                    <div>
+                        <div class="dr-name" id="drName">—</div>
+                        <div class="dr-cust" id="drCust">—</div>
+                    </div>
+                </div>
+                <button type="button" class="dr-close" data-close>
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="dr-score-band">
+                <span class="dr-band-eyebrow">Overall score</span>
+                <div class="dr-band-score">
+                    <span class="mono" id="drScore">—</span>
+                    <span class="score-unit">%</span>
+                </div>
+            </div>
+
+            <div class="dr-section">
+                <h4>Chi tiết tiêu chí</h4>
+                <div class="dr-stats" id="drStats"></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- ===== JSON data for drawer ===== -->
+    <script id="rowsData" type="application/json">
+        {{ {
+            "criteria": dashboard.criteria_columns,
+            "rows": dashboard.rows
+        } | tojson }}
+    </script>
+
+    <script>
+        (function () {
+            const root = document.documentElement;
+            const STORAGE = { theme: 'r2.theme', density: 'r2.density' };
+
+            // Theme toggle
+            const themeBtn = document.getElementById('themeBtn');
+            const themeIcon = document.getElementById('themeIcon');
+            function applyTheme(t) {
+                root.setAttribute('data-theme', t);
+                themeIcon.textContent = t === 'dark' ? 'light_mode' : 'dark_mode';
+                try { localStorage.setItem(STORAGE.theme, t); } catch (e) {}
+            }
+            try {
+                const saved = localStorage.getItem(STORAGE.theme);
+                if (saved === 'dark' || saved === 'light') applyTheme(saved);
+                else applyTheme('light');
+            } catch (e) { applyTheme('light'); }
+            themeBtn.addEventListener('click', () => {
+                applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+            });
+
+            // Density toggle
+            const densityBtn = document.getElementById('densityBtn');
+            const densityLabel = document.getElementById('densityLabel');
+            const cycle = ['regular', 'compact', 'comfy'];
+            const labels = { regular: 'Regular', compact: 'Compact', comfy: 'Comfy' };
+            function applyDensity(d) {
+                root.setAttribute('data-density', d);
+                densityLabel.textContent = labels[d];
+                try { localStorage.setItem(STORAGE.density, d); } catch (e) {}
+            }
+            try {
+                const saved = localStorage.getItem(STORAGE.density);
+                applyDensity(cycle.includes(saved) ? saved : 'regular');
+            } catch (e) { applyDensity('regular'); }
+            densityBtn.addEventListener('click', () => {
+                const cur = root.getAttribute('data-density') || 'regular';
+                const next = cycle[(cycle.indexOf(cur) + 1) % cycle.length];
+                applyDensity(next);
+            });
+
+            // Customer dropdown
+            document.querySelectorAll('.dd').forEach(dd => {
+                const btn = dd.querySelector('[data-toggle]');
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.dd.open').forEach(o => { if (o !== dd) o.classList.remove('open'); });
+                    dd.classList.toggle('open');
+                });
+            });
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.dd.open').forEach(o => o.classList.remove('open'));
+            });
+
+            // Filter / search / sort
+            const tbody = document.getElementById('rkBody');
+            const rows = Array.from(tbody.querySelectorAll('tr[data-name]'));
+            const search = document.getElementById('search');
+            const searchClear = document.getElementById('searchClear');
+            const gpills = Array.from(document.querySelectorAll('.gpill'));
+            const visibleCount = document.getElementById('visibleCount');
+            const totalCount = rows.length;
+            let activeGrades = new Set();
+            let q = '';
+
+            function applyFilter() {
+                let visible = 0;
+                rows.forEach(r => {
+                    const nameOk = !q || r.dataset.name.includes(q);
+                    const gradeOk = activeGrades.size === 0 || activeGrades.has(r.dataset.grade);
+                    const ok = nameOk && gradeOk;
+                    r.style.display = ok ? '' : 'none';
+                    if (ok) visible++;
+                });
+                visibleCount.textContent = visible;
+                // re-number visible rows
+                let n = 1;
+                rows.forEach(r => {
+                    if (r.style.display !== 'none') {
+                        const td = r.querySelector('.td-rank');
+                        if (td) td.textContent = n++;
+                    }
+                });
+            }
+
+            search.addEventListener('input', (e) => {
+                q = e.target.value.trim().toLowerCase();
+                searchClear.style.display = q ? 'flex' : 'none';
+                applyFilter();
+            });
+            searchClear.addEventListener('click', () => {
+                search.value = ''; q = '';
+                searchClear.style.display = 'none';
+                applyFilter();
+            });
+
+            gpills.forEach(p => {
+                p.addEventListener('click', () => {
+                    const g = p.dataset.grade;
+                    if (activeGrades.has(g)) { activeGrades.delete(g); p.classList.remove('on'); }
+                    else { activeGrades.add(g); p.classList.add('on'); }
+                    applyFilter();
+                });
+            });
+
+            // Sort
+            const ths = document.querySelectorAll('.th-sort');
+            ths.forEach(th => {
+                th.addEventListener('click', () => {
+                    const key = th.dataset.sort;
+                    const curDir = th.dataset.dir;
+                    const dir = curDir === 'desc' ? 'asc' : 'desc';
+                    // reset others
+                    ths.forEach(o => {
+                        o.removeAttribute('data-dir');
+                        o.classList.remove('on');
+                        const ar = o.querySelector('.th-ar');
+                        if (ar) { ar.textContent = ''; ar.classList.remove('on'); }
+                    });
+                    th.dataset.dir = dir;
+                    th.classList.add('on');
+                    const ar = th.querySelector('.th-ar');
+                    if (ar) { ar.textContent = dir === 'desc' ? '▼' : '▲'; ar.classList.add('on'); }
+
+                    const mult = dir === 'desc' ? -1 : 1;
+                    const getVal = (r) => {
+                        if (key === 'name') return r.dataset.name;
+                        if (key === 'grade') return r.dataset.grade;
+                        if (key === 'score') return parseFloat(r.dataset.score) || 0;
+                        if (key.startsWith('m_')) {
+                            const i = parseInt(key.slice(2), 10);
+                            const cell = r.querySelectorAll('.num-cell')[i];
+                            const v = cell && cell.dataset.val;
+                            return v === '' || v == null ? -Infinity : parseFloat(v);
+                        }
+                        return 0;
+                    };
+                    const sorted = rows.slice().sort((a, b) => {
+                        const va = getVal(a), vb = getVal(b);
+                        if (typeof va === 'string') return va.localeCompare(vb) * mult;
+                        return (va - vb) * mult;
+                    });
+                    sorted.forEach(r => tbody.appendChild(r));
+                    applyFilter();
+                });
+            });
+
+            // Refresh button
+            const refreshBtn = document.getElementById('refreshBtn');
+            const refreshIcon = document.getElementById('refreshIcon');
+            const refreshLabel = document.getElementById('refreshLabel');
+            function showToast(message, ok) {
+                const t = document.createElement('div');
+                t.className = 'toast ' + (ok ? 'ok' : 'err');
+                t.innerHTML = '<span class="material-symbols-outlined">' + (ok ? 'check_circle' : 'error') + '</span><span>' + message + '</span>';
+                document.body.appendChild(t);
+                requestAnimationFrame(() => t.classList.add('show'));
+                setTimeout(() => {
+                    t.classList.remove('show');
+                    setTimeout(() => t.remove(), 300);
+                }, ok ? 2400 : 4200);
+            }
+            refreshBtn.addEventListener('click', async () => {
+                if (refreshBtn.disabled) return;
+                refreshBtn.disabled = true;
+                refreshIcon.classList.add('spin');
+                refreshLabel.textContent = 'Đang đồng bộ...';
+                try {
+                    const res = await fetch('/api/cpt-rank-2/refresh', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'fetch' },
+                        credentials: 'same-origin',
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.status === 'success') {
+                        showToast('Đã sync ' + data.row_count + ' dòng (' + data.year_count + ' năm)', true);
+                        setTimeout(() => location.reload(), 800);
+                    } else {
+                        showToast('Sync thất bại: ' + (data.message || res.statusText), false);
+                        refreshBtn.disabled = false;
+                        refreshIcon.classList.remove('spin');
+                        refreshLabel.textContent = 'Đồng bộ';
+                    }
+                } catch (err) {
+                    showToast('Lỗi mạng: ' + err.message, false);
+                    refreshBtn.disabled = false;
+                    refreshIcon.classList.remove('spin');
+                    refreshLabel.textContent = 'Đồng bộ';
+                }
+            });
+
+            // Drawer
+            const dataNode = document.getElementById('rowsData');
+            let rowsData = { criteria: [], rows: [] };
+            try { rowsData = JSON.parse(dataNode.textContent); } catch (e) {}
+            const drawer = document.getElementById('drawer');
+            const drName = document.getElementById('drName');
+            const drCust = document.getElementById('drCust');
+            const drScore = document.getElementById('drScore');
+            const drGrade = document.getElementById('drGrade');
+            const drStats = document.getElementById('drStats');
+
+            function openDrawer(idx) {
+                const r = rowsData.rows[idx];
+                if (!r) return;
+                drName.textContent = r.supplier_name;
+                drCust.textContent = r.customer;
+                drScore.textContent = (r.score_display || '').replace('%', '');
+                const g = r.rank || '';
+                drGrade.textContent = g;
+                drGrade.className = 'grade-chip ' + g;
+                drGrade.style.cssText = 'width:46px;height:46px;font-size:18px;border-radius:12px;';
+                drStats.innerHTML = '';
+                rowsData.criteria.forEach((col) => {
+                    const v = r.metrics ? r.metrics[col] : null;
+                    const num = (v == null) ? null : parseFloat(v);
+                    const pct = (num == null) ? 0 : Math.max(0, Math.min(100, num));
+                    const colorVar = col === 'Quantity' ? 'var(--m-qty)' : (col === 'Quality' ? 'var(--m-qual)' : 'var(--m-time)');
+                    const el = document.createElement('div');
+                    el.className = 'dr-stat';
+                    el.innerHTML =
+                        '<div class="ds-left">' +
+                            '<span class="ds-l">' + col + '</span>' +
+                            '<span class="ds-v">' + (num == null ? '—' : num + '%') + '</span>' +
+                        '</div>' +
+                        '<div class="ds-bar"><span style="width:' + pct.toFixed(1) + '%;background:' + colorVar + ';"></span></div>';
+                    drStats.appendChild(el);
+                });
+                drawer.classList.add('open');
+                document.body.style.overflow = 'hidden';
+                rows.forEach(r => r.classList.remove('sel'));
+                const tr = tbody.querySelector('tr[data-idx="' + idx + '"]');
+                if (tr) tr.classList.add('sel');
+            }
+            function closeDrawer() {
+                drawer.classList.remove('open');
+                document.body.style.overflow = '';
+                rows.forEach(r => r.classList.remove('sel'));
+            }
+            drawer.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeDrawer));
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+
+            rows.forEach(r => {
+                r.addEventListener('click', () => openDrawer(parseInt(r.dataset.idx, 10)));
+            });
+            document.querySelectorAll('.risk-item').forEach(b => {
+                b.addEventListener('click', () => openDrawer(parseInt(b.dataset.idx, 10)));
+            });
+        })();
+    </script>
+</body>
+
+</html>

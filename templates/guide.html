@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hướng dẫn - 1st Lot Management System</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="/static/figma-vibe.css" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6",
+                        "accent": "#0ea5e9",
+                        "surface": "#ffffff",
+                        "background": "#f8fafc",
+                    },
+                    fontFamily: {
+                        "sans": ["Inter", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style type="text/tailwindcss">
+        .custom-scrollbar::-webkit-scrollbar { height: 10px; width: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .material-symbols-outlined { 
+            font-family: 'Material Symbols Outlined'; 
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20; 
+        }
+        
+        #sidebar { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        #sidebar.collapsed { width: 80px; }
+        #sidebar.collapsed .sidebar-text { display: none; }
+        #sidebar.collapsed .sidebar-header-text { display: none; }
+        #sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+        #sidebar.collapsed .section-label { display: none; }
+
+        html.dark body { background-color: #0f172a; color: #e2e8f0; }
+        html.dark .bg-white { background-color: #111827; }
+        html.dark .bg-white\/50 { background-color: rgba(17, 24, 39, 0.5); }
+        html.dark .bg-surface { background-color: #111827; }
+        html.dark .bg-slate-50 { background-color: #0f172a; }
+        html.dark .bg-slate-50\/50 { background-color: rgba(15, 23, 42, 0.5); }
+        html.dark .bg-slate-100 { background-color: #1f2937; }
+        html.dark .bg-slate-100\/50 { background-color: rgba(31, 41, 55, 0.5); }
+        html.dark .border-slate-200 { border-color: #334155; }
+        html.dark .border-slate-100 { border-color: #1f2937; }
+        html.dark .text-slate-900 { color: #e2e8f0; }
+        html.dark .text-slate-800 { color: #e2e8f0; }
+        html.dark .text-slate-700 { color: #cbd5e1; }
+        html.dark .text-slate-600 { color: #cbd5e1; }
+        html.dark .text-slate-500 { color: #94a3b8; }
+        html.dark .text-slate-400 { color: #94a3b8; }
+        html.dark .text-slate-300 { color: #94a3b8; }
+        html.dark .text-slate-200 { color: #64748b; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-track { background: #0b1220; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-color: #0b1220; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Department section animations */
+        @keyframes slideUpFadeIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-4px) rotate(3deg); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes taskSlideIn {
+            from { opacity: 0; transform: translateX(-12px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .dept-header-icon {
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+        .dept-card {
+            opacity: 0;
+            animation: slideUpFadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .dept-card-1 { animation-delay: 0.1s; }
+        .dept-card-2 { animation-delay: 0.25s; }
+        .dept-card-3 { animation-delay: 0.4s; }
+
+        .dept-task {
+            opacity: 0;
+            animation: taskSlideIn 0.4s ease-out forwards;
+        }
+        .dept-card-1 .dept-task:nth-child(1) { animation-delay: 0.3s; }
+        .dept-card-1 .dept-task:nth-child(2) { animation-delay: 0.4s; }
+        .dept-card-1 .dept-task:nth-child(3) { animation-delay: 0.5s; }
+        .dept-card-1 .dept-task:nth-child(4) { animation-delay: 0.6s; }
+        .dept-card-1 .dept-task:nth-child(5) { animation-delay: 0.7s; }
+        .dept-card-2 .dept-task:nth-child(1) { animation-delay: 0.5s; }
+        .dept-card-3 .dept-task:nth-child(1) { animation-delay: 0.65s; }
+
+        /* Dark mode overrides for department cards */
+        html.dark .dept-card { background: linear-gradient(to bottom, #1e293b, #0f172a); }
+        html.dark .dept-card-1 { border-color: rgba(59, 130, 246, 0.25); }
+        html.dark .dept-card-2 { border-color: rgba(16, 185, 129, 0.25); }
+        html.dark .dept-card-3 { border-color: rgba(245, 158, 11, 0.25); }
+        html.dark .dept-card h4 { color: #e2e8f0; }
+        html.dark .dept-task span:last-child { color: #cbd5e1; }
+        html.dark .dept-task:hover { background-color: rgba(255,255,255,0.03) !important; }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-row overflow-hidden font-sans bg-background text-slate-900 figma-ui">
+    <!-- Left Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex shrink-0 z-20">
+        <div class="p-6 flex items-center gap-3">
+            <div
+                class="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white shadow-lg shadow-accent/20 shrink-0">
+                <span class="material-symbols-outlined !text-2xl">app_registration</span>
+            </div>
+            <div class="sidebar-header-text">
+                <h1 class="text-sm font-bold tracking-tight text-slate-800">1st Lot Tracker</h1>
+                <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">M29 Digital Team</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/">
+                <span class="material-symbols-outlined">home</span>
+                <span class="sidebar-text">Trang chủ</span>
+            </a>
+            <div class="h-px bg-slate-100 mx-4 my-2"></div>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/first-lot/">
+                <span class="material-symbols-outlined">inventory_2</span>
+                <span class="sidebar-text">Thông tin vải</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/fabric-schedule/">
+                <span class="material-symbols-outlined">event</span>
+                <span class="sidebar-text">Check lịch vải</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/history/">
+                <span class="material-symbols-outlined">history</span>
+                <span class="sidebar-text">1st Lot History</span>
+            </a>
+            {% if user.role in ['admin', 'MD'] %}
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/emails/">
+                <span class="material-symbols-outlined">mail</span>
+                <span class="sidebar-text">Email List</span>
+            </a>
+            {% endif %}
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/dashboard/">
+                <span class="material-symbols-outlined">analytics</span>
+                <span class="sidebar-text">Dashboard</span>
+            </a>
+            <div class="pt-4 pb-2 px-4 section-label">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quản trị</p>
+            </div>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="sidebar-text">Cài đặt</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 bg-accent text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-accent/10"
+                href="/guide/">
+                <span class="material-symbols-outlined">menu_book</span>
+                <span class="sidebar-text">Hướng dẫn</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-100 italic text-[10px] text-slate-400 text-center sidebar-text">
+            M29 Digital Team
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-50/50 h-screen overflow-hidden">
+        <!-- Header -->
+        <header class="bg-surface border-b border-slate-200 px-8 py-4 flex items-center justify-between gap-4 shrink-0">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()"
+                    class="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <img src="/static/Logo.png" alt="Logo" class="h-8 w-auto object-contain">
+                <h2 class="text-lg font-bold text-slate-800">Hướng dẫn</h2>
+            </div>
+            <div class="flex items-center gap-6">
+                <button id="themeToggle" onclick="toggleTheme()"
+                    class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                    <span class="theme-label hidden md:inline text-xs font-semibold">Night</span>
+                </button>
+                <div class="flex items-center gap-4 border-l border-slate-100 pl-6 ml-3">
+                    <div class="flex flex-col items-end">
+                        <span class="text-xs font-black text-slate-800">{{ user.name if user else 'Guest' }}</span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{{
+                            user.department if user else '---' }}</span>
+                    </div>
+                    <div
+                        class="h-10 w-10 rounded-xl border-2 border-slate-100 overflow-hidden bg-white shadow-sm flex items-center justify-center text-accent">
+                        <span class="material-symbols-outlined">account_circle</span>
+                    </div>
+                    <a href="/logout"
+                        class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        title="Đăng xuất">
+                        <span class="material-symbols-outlined">logout</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="max-w-7xl mx-auto space-y-8">
+                <section class="bg-surface rounded-3xl border border-slate-200 shadow-sm p-8">
+                    <div class="flex items-start justify-between gap-6 flex-wrap">
+                        <div class="space-y-2">
+                            <h3 class="text-lg font-bold text-slate-800">Tài liệu quy trình</h3>
+                            <p class="text-xs text-slate-500 font-medium">
+                                Chi tiết về Quy trình quản lý 1st lot, Color Test Report và MTSR.
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <a class="inline-flex items-center gap-2 bg-accent text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-accent/20 hover:bg-indigo-700 transition-all"
+                                href="https://drive.google.com/file/d/11N6_wO45NqD8Ozh6y8brdvkF_HS72zOL/view?usp=drive_link"
+                                target="_blank" rel="noopener noreferrer">
+                                <span class="material-symbols-outlined text-base">open_in_new</span>
+                                Mở tài liệu quy trình
+                            </a>
+                            <a class="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold shadow-sm hover:bg-slate-50 transition-all"
+                                href="https://notebooklm.google.com/notebook/d83a0df5-261a-4e8c-90e7-77f9f64a0c00?authuser=1"
+                                target="_blank" rel="noopener noreferrer">
+                                <span class="material-symbols-outlined text-base">smart_toy</span>
+                                Hỏi đáp về quy trình với NotebookLM
+                            </a>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="bg-surface rounded-3xl border border-slate-200 shadow-sm overflow-hidden dept-section">
+                    <!-- Section Header with gradient -->
+                    <div class="relative overflow-hidden px-8 pt-8 pb-6">
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-emerald-500/5 to-amber-500/5"></div>
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-accent/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
+                        <div class="relative flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="dept-header-icon w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                                    <span class="material-symbols-outlined text-white !text-2xl">fact_check</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-800">Thao tác theo phòng ban</h3>
+                                    <p class="text-xs text-slate-500 font-medium mt-0.5">Phân quyền và trách nhiệm trên hệ thống 1st Lot</p>
+                                </div>
+                            </div>
+                            <div class="hidden sm:flex items-center gap-2 bg-slate-100/80 backdrop-blur-sm rounded-full px-4 py-2">
+                                <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">3 Phòng ban</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gradient Divider -->
+                    <div class="h-px bg-gradient-to-r from-transparent via-blue-300 to-transparent mx-8"></div>
+
+                    <!-- Department Cards Grid -->
+                    <div class="p-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                        <!-- Card 1: Phòng Kinh doanh -->
+                        <div class="dept-card dept-card-1 group relative rounded-2xl border border-blue-200/60 bg-gradient-to-b from-white to-blue-50/50 overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 hover:border-blue-300">
+                            <!-- Card glow effect -->
+                            <div class="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-blue-600/0 group-hover:from-blue-400/5 group-hover:to-blue-600/10 transition-all duration-500"></div>
+                            <!-- Card Header -->
+                            <div class="relative p-5 pb-4">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md shadow-blue-500/30 group-hover:shadow-lg group-hover:shadow-blue-500/40 transition-all duration-300 group-hover:scale-110">
+                                        <span class="material-symbols-outlined text-white !text-xl">storefront</span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="text-sm font-bold text-slate-800 truncate">Phòng Kinh doanh</h4>
+                                        <p class="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">P. KDXNK</p>
+                                    </div>
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:rotate-12">
+                                        <span class="material-symbols-outlined text-blue-500 !text-base">arrow_outward</span>
+                                    </div>
+                                </div>
+                                <div class="h-1 w-12 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 group-hover:w-full transition-all duration-700 ease-out"></div>
+                            </div>
+                            <!-- Card Content -->
+                            <div class="relative px-5 pb-5 space-y-2.5">
+                                <div class="dept-task flex items-start gap-3 p-2.5 rounded-xl hover:bg-blue-50/80 transition-colors duration-200 cursor-default">
+                                    <div class="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span class="material-symbols-outlined text-blue-600 !text-sm">edit_note</span>
+                                    </div>
+                                    <span class="text-sm text-slate-700 leading-relaxed">Cập nhật thông tin đặt vải.</span>
+                                </div>
+                                <div class="dept-task flex items-start gap-3 p-2.5 rounded-xl hover:bg-blue-50/80 transition-colors duration-200 cursor-default">
+                                    <div class="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span class="material-symbols-outlined text-blue-600 !text-sm">forward_to_inbox</span>
+                                    </div>
+                                    <span class="text-sm text-slate-700 leading-relaxed">Gửi Email xin cấp 1st lot, Color Test Report, MTSR.</span>
+                                </div>
+                                <div class="dept-task flex items-start gap-3 p-2.5 rounded-xl hover:bg-blue-50/80 transition-colors duration-200 cursor-default">
+                                    <div class="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span class="material-symbols-outlined text-blue-600 !text-sm">checklist</span>
+                                    </div>
+                                    <span class="text-sm text-slate-700 leading-relaxed">Kiểm tra và cập nhật thông tin 1st lot khi nhận.</span>
+                                </div>
+                                <div class="dept-task flex items-start gap-3 p-2.5 rounded-xl hover:bg-blue-50/80 transition-colors duration-200 cursor-default">
+                                    <div class="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span class="material-symbols-outlined text-blue-600 !text-sm">mark_email_unread</span>
+                                    </div>
+                                    <span class="text-sm text-slate-700 leading-relaxed">Gửi Email lại với các 1st lot không được gửi đúng hạn.</span>
+                                </div>
+                                <div class="dept-task flex items-start gap-3 p-2.5 rounded-xl hover:bg-blue-50/80 transition-colors duration-200 cursor-default">
+                                    <div class="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span class="material-symbols-outlined text-blue-600 !text-sm">swap_horiz</span>
+                                    </div>
+                                    <span class="text-sm text-slate-700 leading-relaxed">Cập nhật tình trạng bàn giao.</span>
+                                </div>
+                            </div>
+                            <!-- Task count badge -->
+                            <div class="px-5 pb-4">
+                                <div class="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-100">
+                                    <span class="material-symbols-outlined text-blue-400 !text-sm">task_alt</span>
+                                    <span class="text-[10px] font-bold text-blue-500 uppercase tracking-wider">5 thao tác chính</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Phòng Kỹ thuật Công nghệ -->
+                        <div class="dept-card dept-card-2 group relative rounded-2xl border border-emerald-200/60 bg-gradient-to-b from-white to-emerald-50/50 overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-emerald-500/10 hover:-translate-y-1 hover:border-emerald-300">
+                            <div class="absolute inset-0 bg-gradient-to-br from-emerald-400/0 to-emerald-600/0 group-hover:from-emerald-400/5 group-hover:to-emerald-600/10 transition-all duration-500"></div>
+                            <div class="relative p-5 pb-4">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-md shadow-emerald-500/30 group-hover:shadow-lg group-hover:shadow-emerald-500/40 transition-all duration-300 group-hover:scale-110">
+                                        <span class="material-symbols-outlined text-white !text-xl">engineering</span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="text-sm font-bold text-slate-800 truncate">Phòng Kỹ thuật Công nghệ</h4>
+                                        <p class="text-[10px] font-semibold text-emerald-500 uppercase tracking-wider">P. KTCN</p>
+                                    </div>
+                                    <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:rotate-12">
+                                        <span class="material-symbols-outlined text-emerald-500 !text-base">arrow_outward</span>
+                                    </div>
+                                </div>
+                                <div class="h-1 w-12 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 group-hover:w-full transition-all duration-700 ease-out"></div>
+                            </div>
+                            <div class="relative px-5 pb-5 space-y-2.5">
+                                <div class="dept-task flex items-start gap-3 p-2.5 rounded-xl hover:bg-emerald-50/80 transition-colors duration-200 cursor-default">
+                                    <div class="w-6 h-6 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span class="material-symbols-outlined text-emerald-600 !text-sm">monitoring</span>
+                                    </div>
+                                    <span class="text-sm text-slate-700 leading-relaxed">Theo dõi tình trạng của 1st lot theo Item Code, Nhà cung ứng.</span>
+                                </div>
+                            </div>
+                            <div class="px-5 pb-4">
+                                <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
+                                    <span class="material-symbols-outlined text-emerald-400 !text-sm">task_alt</span>
+                                    <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">1 thao tác chính</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Phòng Quản lý Chất lượng -->
+                        <div class="dept-card dept-card-3 group relative rounded-2xl border border-amber-200/60 bg-gradient-to-b from-white to-amber-50/50 overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-amber-500/10 hover:-translate-y-1 hover:border-amber-300">
+                            <div class="absolute inset-0 bg-gradient-to-br from-amber-400/0 to-amber-600/0 group-hover:from-amber-400/5 group-hover:to-amber-600/10 transition-all duration-500"></div>
+                            <div class="relative p-5 pb-4">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md shadow-amber-500/30 group-hover:shadow-lg group-hover:shadow-amber-500/40 transition-all duration-300 group-hover:scale-110">
+                                        <span class="material-symbols-outlined text-white !text-xl">verified</span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="text-sm font-bold text-slate-800 truncate">Phòng Quản lý Chất lượng</h4>
+                                        <p class="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">P. QLCL</p>
+                                    </div>
+                                    <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:rotate-12">
+                                        <span class="material-symbols-outlined text-amber-500 !text-base">arrow_outward</span>
+                                    </div>
+                                </div>
+                                <div class="h-1 w-12 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 group-hover:w-full transition-all duration-700 ease-out"></div>
+                            </div>
+                            <div class="relative px-5 pb-5 space-y-2.5">
+                                <div class="dept-task flex items-start gap-3 p-2.5 rounded-xl hover:bg-amber-50/80 transition-colors duration-200 cursor-default">
+                                    <div class="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span class="material-symbols-outlined text-amber-600 !text-sm">move_to_inbox</span>
+                                    </div>
+                                    <span class="text-sm text-slate-700 leading-relaxed">Nhận thông tin được bàn giao 1st lot từ Phòng KDXNK.</span>
+                                </div>
+                                <div class="dept-task flex items-start gap-3 p-2.5 rounded-xl hover:bg-amber-50/80 transition-colors duration-200 cursor-default">
+                                    <div class="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span class="material-symbols-outlined text-amber-600 !text-sm">compare</span>
+                                    </div>
+                                    <span class="text-sm text-slate-700 leading-relaxed">Đối chiếu First LOT với vải sản xuất đại trà khi kiểm hàng.</span>
+                                </div>
+                            </div>
+                            <div class="px-5 pb-4">
+                                <div class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-100">
+                                    <span class="material-symbols-outlined text-amber-400 !text-sm">task_alt</span>
+                                    <span class="text-[10px] font-bold text-amber-500 uppercase tracking-wider">2 thao tác chính</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const THEME_KEY = "theme";
+
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            if (theme === "dark") {
+                root.classList.add("dark");
+            } else {
+                root.classList.remove("dark");
+            }
+
+            const btn = document.getElementById("themeToggle");
+            if (btn) {
+                const icon = btn.querySelector(".material-symbols-outlined");
+                const label = btn.querySelector(".theme-label");
+                if (theme === "dark") {
+                    if (icon) icon.innerText = "light_mode";
+                    if (label) label.textContent = "Light";
+                } else {
+                    if (icon) icon.innerText = "dark_mode";
+                    if (label) label.textContent = "Night";
+                }
+            }
+        }
+
+        function initTheme() {
+            const stored = localStorage.getItem(THEME_KEY);
+            if (stored) {
+                applyTheme(stored);
+                return;
+            }
+            const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+            applyTheme(prefersDark ? "dark" : "light");
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.contains("dark");
+            const next = isDark ? "light" : "dark";
+            localStorage.setItem(THEME_KEY, next);
+            applyTheme(next);
+        }
+
+        document.addEventListener("DOMContentLoaded", initTheme);
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+    </script>
+</body>
+
+</html>
+

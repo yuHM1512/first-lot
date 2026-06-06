@@ -96,6 +96,11 @@
                 <span class="sidebar-text">Thông tin vải</span>
             </a>
             <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/fabric-schedule/">
+                <span class="material-symbols-outlined">event</span>
+                <span class="sidebar-text">Check lịch vải</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
                 href="/history/">
                 <span class="material-symbols-outlined">history</span>
                 <span class="sidebar-text">1st Lot History</span>
@@ -117,6 +122,11 @@
                 href="#">
                 <span class="material-symbols-outlined">settings</span>
                 <span class="sidebar-text">Cài đặt</span>
+            </a>
+            <a class="nav-item flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl text-sm font-medium transition-all"
+                href="/guide/">
+                <span class="material-symbols-outlined">menu_book</span>
+                <span class="sidebar-text">Hướng dẫn</span>
             </a>
         </nav>
 
@@ -289,11 +299,18 @@
                             <p class="text-sm text-slate-400 font-medium mt-1">Danh sách email nhân viên KT, MD để CC
                                 thông báo</p>
                         </div>
-                        <button onclick="openStaffModal()"
-                            class="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 hover:scale-105 active:scale-95">
-                            <span class="material-symbols-outlined text-lg">person_add</span>
-                            Thêm nhân viên
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <button id="staffSyncBtn" onclick="syncStaffFromSheet()"
+                                class="flex items-center gap-2 px-5 py-3 bg-emerald-500 text-white rounded-2xl text-sm font-bold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95">
+                                <span class="material-symbols-outlined text-lg" id="staffSyncIcon">sync</span>
+                                <span id="staffSyncText">Đồng bộ Staff</span>
+                            </button>
+                            <button onclick="openStaffModal()"
+                                class="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 hover:scale-105 active:scale-95">
+                                <span class="material-symbols-outlined text-lg">person_add</span>
+                                Thêm nhân viên
+                            </button>
+                        </div>
           </div>
 
                     <div class="relative">
@@ -742,6 +759,40 @@
             } catch (e) {
                 alert('Lỗi kết nối: ' + e.message);
                 text.textContent = 'Đồng bộ Sheet';
+                btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-wait');
+                icon.classList.remove('animate-spin');
+            }
+        }
+    </script>
+    <script>
+        async function syncStaffFromSheet() {
+            const btn = document.getElementById('staffSyncBtn');
+            const icon = document.getElementById('staffSyncIcon');
+            const text = document.getElementById('staffSyncText');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-wait');
+            icon.classList.add('animate-spin');
+            text.textContent = 'Đang đồng bộ...';
+
+            try {
+                const res = await fetch('/api/staff-email/sync', { method: 'POST' });
+                const data = await res.json();
+
+                if (res.ok) {
+                    text.textContent = `✓ Đồng bộ ${data.count} bản ghi`;
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    alert('Lỗi đồng bộ: ' + (data.detail || 'Không rõ'));
+                    text.textContent = 'Đồng bộ Staff';
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-70', 'cursor-wait');
+                    icon.classList.remove('animate-spin');
+                }
+            } catch (e) {
+                alert('Lỗi kết nối: ' + e.message);
+                text.textContent = 'Đồng bộ Staff';
                 btn.disabled = false;
                 btn.classList.remove('opacity-70', 'cursor-wait');
                 icon.classList.remove('animate-spin');

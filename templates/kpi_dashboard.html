@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>KPI Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="/static/figma-vibe.css" />
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef6ff 100%);
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.86);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px -20px rgba(15, 23, 42, 0.18);
+        }
+
+        .module-icon {
+            transition: all 0.35s ease;
+        }
+
+        .glass-card:hover .module-icon {
+            transform: scale(1.08) rotate(4deg);
+        }
+
+        .bg-blob {
+            position: absolute;
+            width: 420px;
+            height: 420px;
+            border-radius: 9999px;
+            filter: blur(90px);
+            opacity: 0.45;
+            z-index: -1;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen relative overflow-y-auto figma-ui">
+    <div class="bg-blob bg-sky-100 top-[-100px] left-[-120px] animate-pulse"></div>
+    <div class="bg-blob bg-cyan-100 bottom-[-140px] right-[-120px] animate-pulse" style="animation-delay: 1.5s"></div>
+
+    <div class="absolute top-8 right-8 z-50 flex items-center gap-4">
+        <div class="flex flex-col items-end">
+            <span class="text-sm font-black text-slate-800">{{ user.name if user else 'Guest' }}</span>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ user.department if user else
+                '---' }}</span>
+        </div>
+        <div
+            class="h-12 w-12 rounded-2xl bg-white shadow-lg border border-slate-100 flex items-center justify-center text-sky-600">
+            <span class="material-symbols-outlined !text-3xl">account_circle</span>
+        </div>
+        <a href="/"
+            class="h-12 px-4 rounded-2xl bg-white text-slate-700 border border-slate-200 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all font-bold text-sm">
+            <span class="material-symbols-outlined !text-xl">arrow_back</span>
+            Trang chủ
+        </a>
+    </div>
+
+    <main class="max-w-6xl mx-auto px-6 pt-28 pb-12 md:px-10 relative z-10">
+        <section class="space-y-5 mb-12">
+            <div
+                class="inline-flex items-center gap-2 px-4 py-2 bg-sky-50 text-sky-700 rounded-full text-xs font-bold uppercase tracking-widest border border-sky-100 shadow-sm">
+                KPI Workspace
+            </div>
+            <div class="max-w-3xl space-y-3">
+                <h1 class="text-5xl font-[900] tracking-tight text-slate-900">KPI Dashboard</h1>
+                <p class="text-lg text-slate-500 font-medium">
+                    Khu vực tổng hợp các dashboard KPI. Tạm thời mình dựng cấu trúc để ưu tiên triển khai
+                    <span class="text-sky-700 font-bold">CPT Rank 2 Dashboard</span> trước.
+                </p>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="glass-card rounded-[2.5rem] p-10 flex flex-col min-h-[320px]">
+                <div
+                    class="w-16 h-16 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center mb-8 shadow-sm module-icon">
+                    <span class="material-symbols-outlined !text-4xl">local_shipping</span>
+                </div>
+                <div class="space-y-3 flex-1">
+                    <div
+                        class="inline-flex px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] uppercase font-bold tracking-wider">
+                        Planned
+                    </div>
+                    <h2 class="text-3xl font-black text-slate-800">Supply Dashboard</h2>
+                    <p class="text-slate-500 leading-relaxed">
+                        Block tạm cho cụm KPI liên quan supply. Chưa mở build ở vòng này.
+                    </p>
+                </div>
+                <div class="pt-8">
+                    <button
+                        class="w-full h-12 rounded-2xl bg-slate-100 text-slate-400 font-bold text-sm cursor-not-allowed"
+                        disabled>
+                        Sẽ triển khai sau
+                    </button>
+                </div>
+            </div>
+
+            <a href="/kpi-dashboard/cpt-rank-2/2026/" class="glass-card rounded-[2.5rem] p-10 flex flex-col min-h-[320px] group">
+                <div
+                    class="w-16 h-16 bg-sky-600 text-white rounded-2xl flex items-center justify-center mb-8 shadow-xl shadow-sky-200 module-icon">
+                    <span class="material-symbols-outlined !text-4xl">leaderboard</span>
+                </div>
+                <div class="space-y-3 flex-1">
+                    <div
+                        class="inline-flex px-3 py-1 bg-sky-50 text-sky-700 rounded-lg text-[10px] uppercase font-bold tracking-wider">
+                        Focus now
+                    </div>
+                    <h2 class="text-3xl font-black text-slate-800 group-hover:text-sky-700 transition-colors">CPT Rank 2 Dashboard</h2>
+                    <p class="text-slate-500 leading-relaxed">
+                        Entry point để mình triển khai dashboard trọng tâm tiếp theo. Hiện đã tách sẵn route và trang riêng.
+                    </p>
+                </div>
+                <div class="pt-8 flex items-center gap-2 text-sky-700 font-bold text-sm">
+                    Mở dashboard
+                    <span
+                        class="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </div>
+            </a>
+        </section>
+    </main>
+</body>
+
+</html>
