@@ -157,12 +157,20 @@ def build_cc_emails_by_sample_type(db, rows: list):
     cc_emails_str = ",".join(list(set(cc_emails_list))) if cc_emails_list else None
     return cc_emails_str
 
-def send_email_to_supplier(cpt_supplier: str, mode: str = 'pending'):
+PENDING_SAMPLE_TYPES = {
+    "first_lot": "CPT 1st lot &PPS",
+    "selection": "CPT Selection Sample",
+}
+
+
+def send_email_to_supplier(cpt_supplier: str, mode: str = 'pending', sample_kind=None):
     """
     Send email for a specific CPT Supplier.
     mode='pending': Send rows where email_status is not 'SENT' (New)
     mode='timeout': Resend rows where email_status is 'SENT' but timed out (>7 days)
     """
+    if sample_kind is not None and sample_kind not in PENDING_SAMPLE_TYPES:
+        raise ValueError("Invalid sample kind")
     db = SessionLocal()
     from datetime import date, timedelta
     from dateutil.relativedelta import relativedelta
@@ -197,6 +205,10 @@ def send_email_to_supplier(cpt_supplier: str, mode: str = 'pending'):
             models.FirstLotRequest.cpt_supplier == cpt_supplier
         )
 
+        if sample_kind is not None:
+            query = query.filter(
+                models.FirstLotRequest.sample_type == PENDING_SAMPLE_TYPES[sample_kind]
+            )
         results = query.all()
         rows = []
         import crud
@@ -336,8 +348,10 @@ def send_email_to_supplier(cpt_supplier: str, mode: str = 'pending'):
     finally:
         db.close()
 
-def send_all_pending_emails():
+def send_all_pending_emails(sample_kind=None):
     """Identify distinct suppliers with pending rows and send emails to each."""
+    if sample_kind is not None and sample_kind not in PENDING_SAMPLE_TYPES:
+        raise ValueError("Invalid sample kind")
     db = SessionLocal()
     try:
         pending_suppliers = db.query(models.FirstLotRequest.cpt_supplier).filter(
@@ -350,7 +364,7 @@ def send_all_pending_emails():
         sent_count = 0
         total_rows = 0
         for (cpt_supplier,) in pending_suppliers:
-            result = send_email_to_supplier(cpt_supplier, mode='pending')
+            result = send_email_to_supplier(cpt_supplier, mode='pending', sample_kind=sample_kind)
             if result["status"] == "success":
                 sent_count += 1
                 total_rows += result["rows"]

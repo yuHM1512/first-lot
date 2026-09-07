@@ -621,11 +621,25 @@
                             {% endif %}
                             {% if user.role in ['admin', 'MD'] %}
                             <button id="emailButton" onclick="sendEmails('pending')"
+                                title="Gửi chung các yêu cầu mới thuộc mọi loại mẫu: SER chưa SENT; riêng 1st lot phải chưa có, chưa nhận hoặc hết hạn. Quét toàn bộ dữ liệu, không theo bộ lọc hiện tại; gom theo NCU, có thể gồm nhiều loại mẫu trong cùng email. Gửi thành công sẽ đánh dấu SENT."
+                                class="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="material-symbols-outlined text-sm">send</span>
+                                <span id="emailText">Gửi Email mới (tất cả)</span>
+                            </button>
+                            <button id="firstLotEmailButton" onclick="sendEmails('first_lot')"
+                                title="Gửi riêng CPT 1st lot &amp;PPS: chỉ các SER chưa gửi và 1st lot chưa có, chưa nhận hoặc hết hạn. Quét toàn bộ dữ liệu, không theo bộ lọc hiện tại; gom một email cho mỗi NCU. Gửi thành công sẽ đánh dấu SENT."
                                 class="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 hover:scale-105 active:scale-95 transition-all shadow-md shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span class="material-symbols-outlined text-sm">send</span>
-                                <span id="emailText">Gửi Email mới</span>
+                                <span id="firstLotEmailText">Gửi xin 1st lot</span>
+                            </button>
+                            <button id="selectionEmailButton" onclick="sendEmails('selection')"
+                                title="Gửi riêng CPT Selection Sample: chỉ các SER chưa gửi, không kiểm tra hạn 1st lot. Quét toàn bộ dữ liệu, không theo bộ lọc hiện tại; gom một email cho mỗi NCU, không kèm 1st lot. Gửi thành công sẽ đánh dấu SENT."
+                                class="flex items-center gap-2 px-6 py-2 bg-cyan-700 text-white rounded-xl text-xs font-bold hover:bg-cyan-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="material-symbols-outlined text-sm">send</span>
+                                <span id="selectionEmailText">Gửi xin Selection Sample</span>
                             </button>
                             <button id="resendButton" onclick="sendEmails('timeout')"
+                                title="Nhắc riêng 1st lot chưa đạt OK: đã gửi hơn 7 ngày hoặc đã đến ngày dự kiến nhận (nhánh ngày dự kiến không yêu cầu từng gửi). Quét toàn bộ dữ liệu, gom theo NCU; tiêu đề có REMINDER. Không nhắc Selection Sample."
                                 class="flex items-center gap-2 px-6 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold hover:bg-amber-700 hover:scale-105 active:scale-95 transition-all shadow-md shadow-amber-100 disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span class="material-symbols-outlined text-sm">history_edu</span>
                                 <span id="resendText">Gửi lại Email</span>
@@ -1635,13 +1649,18 @@
             }
         });
 
-        async function sendEmails(mode = 'pending') {
-            const btn = document.getElementById(mode === 'pending' ? 'emailButton' : 'resendButton');
-            const term = document.getElementById(mode === 'pending' ? 'emailText' : 'resendText');
+        async function sendEmails(mode) {
+            const options = {
+                pending: ['emailButton', 'emailText', '/api/send-emails-bulk', 'gửi chung các yêu cầu mới thuộc mọi loại mẫu'],
+                first_lot: ['firstLotEmailButton', 'firstLotEmailText', '/api/send-emails-bulk?sample_kind=first_lot', 'gửi riêng yêu cầu 1st lot mới'],
+                selection: ['selectionEmailButton', 'selectionEmailText', '/api/send-emails-bulk?sample_kind=selection', 'gửi riêng yêu cầu Selection Sample mới'],
+                timeout: ['resendButton', 'resendText', '/api/send-emails-timeout', 'gửi lại email nhắc 1st lot']
+            };
+            const [buttonId, textId, endpoint, action] = options[mode];
+            const btn = document.getElementById(buttonId);
+            const term = document.getElementById(textId);
             const originalText = term.innerText;
-            const endpoint = mode === 'pending' ? '/api/send-emails-bulk' : '/api/send-emails-timeout';
-
-            if (!confirm(`Bạn có chắc muốn ${mode === 'pending' ? 'gửi email cho các yêu cầu mới' : 'gửi lại email nhắc nhở cho các NCC chưa phản hồi'}?`)) return;
+            if (!confirm(`Bạn có chắc muốn ${action} cho toàn bộ dữ liệu đủ điều kiện, không giới hạn theo bộ lọc hiện tại?`)) return;
 
             btn.disabled = true;
             btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -1653,7 +1672,7 @@
 
                 if (response.ok) {
                     if (result.sent_suppliers === 0) {
-                        alert(mode === 'pending' ? 'Không có email nào cần gửi mới' : 'Không có yêu cầu chậm phản hồi nào cần gửi lại');
+                        alert(mode === 'timeout' ? 'Không có yêu cầu chậm phản hồi nào cần gửi lại' : mode === 'pending' ? 'Không có email nào cần gửi mới' : 'Không có email nào cần gửi mới cho loại mẫu này');
                     } else {
                         alert(`Thành công! Đã gửi ${result.sent_suppliers} email (${result.rows_total} dòng dữ liệu).`);
                         location.reload();

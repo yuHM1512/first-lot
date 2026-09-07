@@ -1211,9 +1211,11 @@ async def save_schedule_email_settings(payload: schemas.ScheduleEmailSettings, d
     return {"status": "success"}
 
 @app.post("/api/send-emails-bulk")
-async def send_emails_bulk_api():
-    from send_email import send_all_pending_emails
-    result = send_all_pending_emails()
+async def send_emails_bulk_api(sample_kind: Optional[str] = None):
+    from send_email import send_all_pending_emails, PENDING_SAMPLE_TYPES
+    if sample_kind is not None and sample_kind not in PENDING_SAMPLE_TYPES:
+        raise HTTPException(status_code=422, detail="Invalid sample kind")
+    result = send_all_pending_emails(sample_kind=sample_kind)
     if result["status"] == "error":
         raise HTTPException(status_code=500, detail=result["message"])
     return result
